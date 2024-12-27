@@ -21,7 +21,7 @@ import logging
 import pandas as pd
 import torch
 from transformers import BertTokenizer, BertModel
-from models.simple_nn import SimpleNN
+from nn_models.simple_nn import SimpleNN
 from tqdm import tqdm
 from file_encoding_detector import detect_encoding
 from read_csv_file import read_csv_file

@@ -1,7 +1,7 @@
 """
 File: inference_pipeline.py
 Author: Xiao-Fei Zhang
-Date: last updated on 2024 Aug 16
+Date: last updated on 2024 Dec
 
 Description: Pipeline for performing inference with the trained model.
 """
@@ -15,7 +15,25 @@ import logging
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(root_dir))
 
-from config import (
+import torch
+from tqdm import tqdm  # Import tqdm for progress bars
+import tempfile
+import pandas as pd
+
+from utils.read_csv_file import read_csv_file
+from preprocessing.post_inference_data_cleaning import clean_and_relabel_data
+from inference import run_filter_on_unlabeled_data
+
+from nn_models.simple_nn import SimpleNN
+from inference.inference_utils import (
+    load_model,
+    load_embeddings_from_disk,
+    save_embeddings_to_disk,
+    generate_embeddings,
+    classify_data,
+)
+
+from project_config import (
     production_data_path,
     filtered_production_data_path,
     training_data_path,
@@ -25,24 +43,6 @@ from config import (
     raw_inference_output_data_path,
     cleaned_inference_output_data_path,
     combined_output_data_path,
-)
-
-import torch
-from tqdm import tqdm  # Import tqdm for progress bars
-import tempfile
-import pandas as pd
-
-from read_csv_file import read_csv_file
-from preprocessing.post_inference_data_cleaning import clean_and_relabel_data
-from inference import run_filter_on_unlabeled_data
-
-from models.simple_nn import SimpleNN
-from inference.inference_utils import (
-    load_model,
-    load_embeddings_from_disk,
-    save_embeddings_to_disk,
-    generate_embeddings,
-    classify_data,
 )
 
 # from models.training_utils import dynamic_batch_processing, process_batch

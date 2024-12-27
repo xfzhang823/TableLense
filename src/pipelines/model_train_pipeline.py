@@ -1,12 +1,13 @@
 """
 File Name: train_pipeline.py
 Author: Xiao-Fei Zhang
-Date: last updated on 2024 Aug 9
+Date: last updated on 2024 Dec
 
 Description:
-This script orchestrates the full pipeline for training a simple 4-hidden-layer neural network model on text data. 
-It includes steps for generating or loading embeddings, splitting data into training and testing sets, 
-and training the model while handling data imbalance, regularization, and early stopping. 
+This script orchestrates the full pipeline for training a simple 4-hidden-layer 
+neural network model on text data. It includes steps for generating or loading embeddings, 
+splitting data into training and testing sets, and training the model while handling 
+data imbalance, regularization, and early stopping. 
 
 Key techniques include:
 - Compensating for data imbalance: Class weights (table_data outweighs other classes)
@@ -15,48 +16,55 @@ Key techniques include:
 
 The pipeline saves the following files:
 - simple_nn_model.pth: 
-  This file contains the state dictionary of the trained neural network model. The state dictionary is a Python 
-  dictionary object that maps each layer to its parameters (e.g., weights and biases). This file will be used 
-  to load the trained model's parameters for inference or further training later on.
+  This file contains the state dictionary of the trained neural network model. 
+  The state dictionary is a Python dictionary object that maps each layer to 
+  its parameters (e.g., weights and biases). This file will be used to load 
+  the trained model's parameters for inference or further training later on.
 
 - embeddings.pkl: 
-  This file contains the generated embeddings, labels, original indices, and groups for the dataset, saved as a 
-  serialized Python object using the pickle module. These embeddings are used as input features for model training.
+  This file contains the generated embeddings, labels, original indices, and groups 
+  for the dataset, saved as a serialized Python object using the pickle module. 
+  These embeddings are used as input features for model training.
 
 - test_data.pth: 
-  This file contains a dictionary with the test dataset and input dimension size used during training. It includes:
+  This file contains a dictionary with the test dataset and input dimension size used 
+  during training. 
+  It includes:
   * X_test: The feature embeddings of the test set.
   * y_test: The labels of the test set.
   * input_dim: The dimension of the input features used to initialize the model.
-  * original_indices: The original indices of the test set from the initial dataset, used to map the test data 
-    back to the original data for further analysis.
+  * original_indices: The original indices of the test set from the initial dataset, 
+  *used to map the test data back to the original data for further analysis.
 
 - train_test_indices.pth: 
   This file contains the training and test indices used during the data split. It includes:
   * train_idx: The indices of the training set.
   * test_idx: The indices of the test set.
-  * original_indices: The original indices of the test set from the initial dataset, used to map the test data 
-    back to the original data for further analysis.
+  * original_indices: The original indices of the test set from the initial dataset, 
+  *used to map the test data back to the original data for further analysis.
 
 Training/Testing Process:
 1. Load or generate embeddings:
    The script first checks if the embeddings file already exists. 
    - If yes, it loads the embeddings from disk.
-   - If no, it reads the data from an Excel file, tokenizes, and generates embeddings using a pre-trained BERT model, 
-     then saves the embeddings to disk.
+   - If no, it reads the data from an Excel file, tokenizes, and generates embeddings 
+   using a pre-trained BERT model, then saves the embeddings to disk.
 
 2. Split the data:
-   The script combines text embeddings with additional features, extracts labels, and splits the data into training 
-   and testing sets using GroupShuffleSplit, ensuring that samples from the same group are not represented in both sets.
+   The script combines text embeddings with additional features, extracts labels, 
+   and splits the data into training and testing sets using GroupShuffleSplit, 
+   ensuring that samples from the same group are not represented in both sets.
 
 3. Train the model:
-   The script defines the neural network architecture with dropout and L2 regularization, sets up the loss function 
-   with class weights, and trains the model, performing forward and backward passes, computing the loss (including L2 
-   regularization), and updating the model parameters.
+   The script defines the neural network architecture with dropout and L2 regularization, 
+   sets up the loss function with class weights, and trains the model, performing forward 
+   and backward passes, computing the loss (including L2 regularization), and 
+   updating the model parameters.
 
 4. Validate and save the model:
-   The model is validated on the test set, and the best model is saved based on validation loss. Early stopping 
-   is implemented to prevent overfitting, and the test data and indices are saved for further analysis.
+   The model is validated on the test set, and the best model is saved based on 
+   validation loss. Early stopping is implemented to prevent overfitting, 
+   and the test data and indices are saved for further analysis.
 """
 
 # Dependencies
@@ -70,15 +78,15 @@ from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
 # Custom classes/functions
-from models.simple_nn import SimpleNN
-from models.training_utils import (
+from nn_models.simple_nn import SimpleNN
+from nn_models.training_utils import (
     generate_embeddings,
     load_or_generate_embeddings,
     load_data,
     split_data,
     train_model,
 )
-from models.evaluate_model import (
+from nn_models.evaluate_model import (
     evaluate_model,
     load_model_and_test_data,
     print_misclassified_headers,

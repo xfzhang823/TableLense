@@ -11,8 +11,8 @@ import logging
 import numpy as np
 import torch
 from tqdm import tqdm
-from models.simple_nn import SimpleNN
-from models.training_utils import dynamic_batch_processing, process_batch
+from nn_models.simple_nn import SimpleNN
+from nn_models.training_utils import dynamic_batch_processing, process_batch
 
 # Check if CUDA is available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
