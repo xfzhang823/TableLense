@@ -1,13 +1,13 @@
 """
 File: preprocessing_utils.py
 Author: Xiao-Fei Zhang
-Date: last updated on 2024 Jul 28
+Date: last updated on 2024 Dec
 
 Description:
-    Utility class for preprocessing Excel files. 
-    It includes functions to clear sheets, copy content between sheets, 
+    - Utility class for preprocessing Excel files. 
+    - It includes functions to clear sheets, copy content between sheets, 
     process Excel files, convert cell references, etc.
-    This version includes both synchronous and asynchronous methods.
+    - This version includes both synchronous and asynchronous methods.
 
     This version uses asyncio.Semaphore to manage resources; 
     it does not use threading.Lock.
@@ -15,27 +15,27 @@ Description:
 Usage:
     from preprocessing_utils import ExcelPreprocessor
 
-Dependencies: xlwings, pandas, os, logging, sys, asyncio, tempfile, shutil
+Dependencies: xlwings, pandas, os, logger, sys, asyncio, tempfile, shutil, etc.
 """
 
+from pathlib import Path
 import os
 import logging
 import sys
+import shutil
+import tempfile
+from typing import Any, Dict, List, Tuple, Union
 import asyncio
 import numpy as np
 import pandas as pd
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 import xlwings as xw
-import tempfile
-import shutil
+import logging_config
 
-# Configure logging
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 
 class ExcelPreprocessor:
@@ -52,7 +52,8 @@ class ExcelPreprocessor:
         Convert cell reference to 1-indexed row and column, whether in A1 or [row, col] format.
     clear_sheet(file_path, sheet_name)
         Clear the target sheet before copying.
-    copy_sheet_to_diff_file(src_path, tgt_path, src_sheet_name, tgt_sheet_name, src_start_cell, tgt_start_cell)
+    copy_sheet_to_diff_file(src_path, tgt_path, src_sheet_name, tgt_sheet_name, src_start_cell,
+    tgt_start_cell)
         Copy content from one sheet to another in different workbooks.
     find_data_area(sheet)
         Find the row/col of the area with data.
@@ -67,13 +68,11 @@ class ExcelPreprocessor:
         Reads data from the specified Excel sheet, handling merged cells by filling each cell in
         the formerly merged area with the original merged cell's value.
     async_process_excel_full_range(file_path)
-        Asynchronously processes the content of an Excel file, handling merged cells by filling each cell
-        in the formerly merged area with the original merged cell's value.
+        Asynchronously processes the content of an Excel file, handling merged cells by
+        filling each cell in the formerly merged area with the original merged cell's value.
     async_read_and_fill_merged_cells(file_path)
         Asynchronously reads data from the specified Excel sheet, handling merged cells by
         filling each cell in the formerly merged area with the original merged cell's value.
-    _read_excel(file_path)
-        Private helper function to read the content of an Excel file synchronously.
     """
 
     def __init__(self):
@@ -103,7 +102,10 @@ class ExcelPreprocessor:
         return f"{col_str}{row}"
 
     def convert_to_indices(self, cell):
-        """Convert cell reference to 1-indexed row and column, whether in A1 or [row, col] format."""
+        """
+        Convert cell reference to 1-indexed row and column, whether in A1 or [row, col]
+        format.
+        """
         if isinstance(cell, str):
             return self.a1_to_rc(cell)
         elif isinstance(cell, (list, tuple)) and len(cell) == 2:
@@ -121,7 +123,7 @@ class ExcelPreprocessor:
         file_path (str): Path to the Excel file.
         sheet_name (str): Name of the sheet to clear.
         """
-        logging.info(f"Clearing sheet: {sheet_name} in file: {file_path}")
+        logger.info(f"Clearing sheet: {sheet_name} in file: {file_path}")
         wb = self.app.books.open(file_path)
         sht = wb.sheets[sheet_name]
         sht.clear()
@@ -151,7 +153,7 @@ class ExcelPreprocessor:
         Returns:
         str: The last row with content in A1 notation.
         """
-        logging.info(
+        logger.info(
             f"Copying sheet: {src_sheet_name} from file: {src_path} to file: {tgt_path}"
         )
         source_wb = self.app.books.open(src_path)
@@ -179,43 +181,121 @@ class ExcelPreprocessor:
 
         return last_row_coord
 
-    def find_data_area(self, sheet):
-        """Find the row/col of the area with data."""
-        logging.info("Finding data area")
-        max_row, max_col = 0, 0
+    def find_data_area(self, sheet) -> Tuple[int, int, int, int]:
+        """
+        Find the row/col boundaries of the area containing data in the Excel sheet.
 
-        for row in range(1, sheet.used_range.last_cell.row + 1):
-            for col in range(1, sheet.used_range.last_cell.column + 1):
-                cell_value = sheet.range((row, col)).value
-                if cell_value not in [None, "", " "]:
-                    max_row, max_col = max(max_row, row), max(max_col, col)
+        Args:
+            sheet: xlwings sheet object.
 
-        min_row = next(
-            row
-            for row in range(1, max_row + 1)
-            if any(
-                sheet.range((row, col)).value not in [None, "", " "]
-                for col in range(1, max_col + 1)
-            )
+        Returns:
+            Tuple[int, int, int, int]: (min_row, max_row, min_col, max_col)
+            - min_row: First row containing non-empty data.
+            - max_row: Last row containing non-empty data.
+            - min_col: First column containing non-empty data.
+            - max_col: Last column containing non-empty data.
+
+        *The method identifies the boundaries of meaningful data in an Excel sheet
+        *Method Steps:
+        1. Bulk Read Data: Fetch the entire data range from the Excel sheet into a 2D list
+        using 'sheet.range(sheet.used_range.address).value'.
+        2. Determine Dimensions: Calculate the number of rows (`rows`) and
+        columns ('cols') in the 2D list.
+        3. Find Non-Empty Rows:
+            - Loop through each row and check if any cell contains meaningful data
+            ('not in [None, "", " "]').
+            - Identify the first (`min_row`) and last (`max_row`) rows with non-empty data.
+        4. Find Non-Empty Columns:
+            - Loop through each column and check if any cell in that column contains
+            meaningful data.
+            - Identify the first (`min_col`) and last (`max_col`) columns with
+            non-empty data.
+        5. Log and Return Results:
+            - Log the calculated 'min_row', 'max_row', 'min_col', and 'max_col'
+            for debugging.
+            - Return the tuple '(min_row, max_row, min_col, max_col)' indicating
+            the bounding rectangle of the data.
+
+        Example output: (1, 3, 2, 3)
+
+        This structured approach efficiently  while minimizing redundant operations.
+        """
+        logger.info("Finding data area")
+
+        # Read all the cell values into a 2D list
+        data = sheet.range(sheet.used_range.address).value  # 2D list
+
+        # Initialize variables
+        rows = len(data)
+        cols = len(data[0]) if rows > 0 else 0
+
+        # Identify the minimum and maximum rows with non-empty cells
+        min_row = min(
+            r + 1
+            for r in range(rows)
+            if any(cell not in [None, "", " "] for cell in data[r])
+        )
+        max_row = max(
+            r + 1
+            for r in range(rows)
+            if any(cell not in [None, "", " "] for cell in data[r])
         )
 
-        min_col = next(
-            col
-            for col in range(1, max_col + 1)
-            if any(
-                sheet.range((row, col)).value not in [None, "", " "]
-                for row in range(1, max_row + 1)
-            )
+        # Identify the minimum and maximum columns with non-empty cells
+        min_col = min(
+            c + 1
+            for c in range(cols)
+            if any(data[r][c] not in [None, "", " "] for r in range(rows))
+        )
+        max_col = max(
+            c + 1
+            for c in range(cols)
+            if any(data[r][c] not in [None, "", " "] for r in range(rows))
         )
 
-        logging.info(
+        logger.info(
             f"Data area determined: min_row={min_row}, max_row={max_row}, min_col={min_col}, max_col={max_col}"
         )
         return min_row, max_row, min_col, max_col
 
+    # Todo: older version - to be deleted after debugging
+    # def find_data_area_old_version(self, sheet):
+    #     """Find the row/col of the area with data."""
+    #     logger.info("Finding data area")
+    #     max_row, max_col = 0, 0
+
+    #     for row in range(1, sheet.used_range.last_cell.row + 1):
+    #         for col in range(1, sheet.used_range.last_cell.column + 1):
+    #             cell_value = sheet.range((row, col)).value
+    #             if cell_value not in [None, "", " "]:
+    #                 max_row, max_col = max(max_row, row), max(max_col, col)
+
+    #     min_row = next(
+    #         row
+    #         for row in range(1, max_row + 1)
+    #         if any(
+    #             sheet.range((row, col)).value not in [None, "", " "]
+    #             for col in range(1, max_col + 1)
+    #         )
+    #     )
+
+    #     min_col = next(
+    #         col
+    #         for col in range(1, max_col + 1)
+    #         if any(
+    #             sheet.range((row, col)).value not in [None, "", " "]
+    #             for row in range(1, max_row + 1)
+    #         )
+    #     )
+
+    #     logger.info(
+    #         f"Data area determined: min_row={min_row}, max_row={max_row}, min_col={min_col}, max_col={max_col}"
+    #     )
+    #     return min_row, max_row, min_col, max_col
+
     def find_table_area(self, sheet):
         """Find the row/col of the table area."""
-        logging.info("Finding table area")
+        logger.info("Finding table area")
 
         min_row, max_row, min_col, max_col = self.find_data_area(sheet)
 
@@ -249,7 +329,7 @@ class ExcelPreprocessor:
             - 1
         )
 
-        logging.info(
+        logger.info(
             f"Table area determined: min_row={min_row}, max_row={table_max_row}, min_col={min_col}, max_col={table_max_col}"
         )
         return min_row, table_max_row, min_col, table_max_col
@@ -268,57 +348,63 @@ class ExcelPreprocessor:
 
         return all(neighbor in [None, "", " "] for neighbor in neighbors)
 
-    def process_excel_full_range(self, file_path):
+    def process_excel_full_range(
+        self, file_path: Union[Path, str], yearbook_source: str, group: str
+    ) -> List[Dict[str, Any]]:
         """
         Processes the content of an Excel file, handling merged cells by filling each cell
         in the formerly merged area with the original merged cell's value.
+
         Also:
-        - Adds a group field to track the table source (which table)
-        - Adds a row_id to track the order of each row within each group.
+        - add
 
         Args:
             file_path (str): The path to the Excel file.
 
         Returns:
-            list: List of dictionaries containing the processed data, group label, and row_id.
+            pd.DataFrame: DataFrame containing processed rows of the Excel file.
         """
-        logging.info(f"Processing file: {file_path}")
-        data, merged_ranges = self._read_and_fill_merged_cells(file_path)
-        file_name = os.path.splitext(os.path.basename(file_path))[0]
+        logger.info(f"Processing file: {file_path}")
 
-        processed_data = []
-        row_id = 1  # Initialize row_id counter
-        label = ""
+        # Ensure file_path is Path obj
+        file_path = Path(file_path)
 
-        for row in data:
-            row = ["EMPTY" if cell is None else cell for cell in row]
-            row = [str(cell).replace(",", " ") for cell in row]
+        # Core processing
+        raw_data, _ = self._read_and_fill_merged_cells(file_path)
 
-            processed_data.append(
-                {
-                    "text": ", ".join([str(cell) for cell in row]),
-                    "group": file_name,
-                    "row_id": row_id,
-                    "label": label,
-                }
-            )
-            row_id += 1
-
+        # Generate a new list by adding "row_id" and "EMPTY"
+        processed_data = [
+            {
+                "text": ", ".join(
+                    ["EMPTY" if cell is None else str(cell) for cell in row]
+                ),
+                "row_id": idx
+                + 1,  # Sequential row ID for a table ("order" feature for training)
+                "group": group,  # table number (data file name)
+                "yearbook_source": yearbook_source,  # 2012 or 2022 yearbook
+            }
+            for idx, row in enumerate(raw_data)
+        ]
         return processed_data
 
     def _read_and_fill_merged_cells(self, file_path):
         """
-        Reads data from the specified Excel sheet, handling merged cells by filling each cell in
-        the formerly merged area with the original merged cell's value.
+        Reads data from the specified Excel sheet, handling merged cells by filling
+        each cell in the formerly merged area with the original merged cell's value.
 
         Parameters:
-        - file_path (str): Path to the Excel workbook.
+            - file_path (str): Path to the Excel workbook.
 
         Returns:
-        - list: Nested list representing the content of the Excel file with filled merged cells.
-        - list: List of merged cell ranges.
+            Tuple[List[List[Any]], List[Any]]:
+                - Nested list representing the content of the Excel file with filled
+                merged cells.
+                - List of merged cell ranges.
+
+        Raises:
+            Exception: If there are issues opening or processing the file.
         """
-        logging.info(f"Reading and filling merged cells in file: {file_path}")
+        logger.info(f"Reading and filling merged cells in file: {file_path}")
         try:
             temp_dir = tempfile.mkdtemp()
             with tempfile.NamedTemporaryFile(
@@ -326,7 +412,7 @@ class ExcelPreprocessor:
             ) as temp_file:
                 temp_file_path = temp_file.name
                 shutil.copy(file_path, temp_file_path)
-                logging.info(f"Temporary file created at: {temp_file_path}")
+                logger.info(f"Temporary file created at: {temp_file_path}")
 
             wb = self.app.books.open(temp_file_path)
             sheet = wb.sheets[0]
@@ -377,186 +463,95 @@ class ExcelPreprocessor:
             for row, col, value in data_with_merge_info:
                 data_matrix[row - 1][col - 1] = value
 
-            logging.info(f"Finished processing file: {file_path}")
+            logger.info(f"Finished processing file: {file_path}")
             return data_matrix, merged_ranges
 
         except Exception as e:
-            logging.error(f"Error processing file {file_path}: {e}")
+            logger.error(f"Error processing file {file_path}: {e}")
             return [], []
 
         finally:
             shutil.rmtree(temp_dir)
 
-    async def async_process_excel_full_range(self, file_path):
+    async def process_excel_full_range_async(
+        self, file_path: str, group: str, yearbook_source: str
+    ) -> List[Dict[str, Any]]:
         """
-        Asynchronously processes the content of an Excel file, handling merged cells by filling each cell
-        in the formerly merged area with the original merged cell's value.
-        Also adds a row_id field to track the order of each row within each group.
+        Asynchronously processes the content of an Excel file, handling merged cells
+        by filling each cell in the formerly merged area with the original merged cell's value.
+        Also adds a row_id field and incorporates the group and yearbook_source into the output.
 
         Args:
-            file_path (str): The path to the Excel file.
+            - file_path (str): The path to the Excel file.
+            - group (str): The group or table identifier (e.g., derived from the file name).
+            yearbook_source (str): The yearbook source (e.g., "2012").
 
         Returns:
-            list: List of dictionaries containing the processed data, group label, and row_id.
+            List[Dict[str, Any]]: A list of dictionaries containing processed rows
+            with keys `text`, `row_id`, `group`, and `yearbook_source`.
         """
+        logger.info(f"Processing file asynchronously: {file_path}")
 
-        data = await self.async_read_and_fill_merged_cells(file_path)
-        file_name = os.path.splitext(os.path.basename(file_path))[0]
+        # Ensure file path is Paht obj
+        file_path = Path(file_path)
 
-        processed_data = []
-        row_id = 1
+        # Read and process the file asynchronously
+        data = await self.read_and_fill_merged_cells_async(file_path)
 
-        for row in data:
-            row = ["EMPTY" if cell is None else cell for cell in row]
-            row = [str(cell).replace(",", " ") for cell in row]
-
-            processed_data.append(
-                {
-                    "text": ", ".join([str(cell) for cell in row]),
-                    "group": file_name,
-                    "row_id": row_id,
-                }
-            )
-            row_id += 1
+        # Process each row
+        processed_data = [
+            {
+                "text": ", ".join(
+                    ["EMPTY" if cell is None else str(cell) for cell in row]
+                ),
+                "row_id": idx + 1,
+                "group": group,
+                "yearbook_source": yearbook_source,
+            }
+            for idx, row in enumerate(data)
+        ]
 
         return processed_data
 
-    async def async_read_and_fill_merged_cells(self, file_path):
+    async def read_and_fill_merged_cells_async(self, file_path: str) -> List[List[Any]]:
         """
         Asynchronously reads data from the specified Excel sheet, handling merged cells by
         filling each cell in the formerly merged area with the original merged cell's value.
 
-        Parameters:
-        - file_path (str): Path to the Excel workbook.
-
-        Returns:
-        - list: Nested list representing the content of the Excel file with filled merged cells.
-        """
-        loop = asyncio.get_running_loop()
-
-        with ThreadPoolExecutor() as pool:
-            data = await loop.run_in_executor(
-                pool, self._read_and_fill_merged_cells, file_path
-            )
-
-        return data
-
-    def _read_excel(self, file_path):
-        """
-        Private helper function to read the content of an Excel file synchronously.
-
         Args:
-            file_path (str): The path to the Excel file.
+            file_path (str): Path to the Excel workbook.
 
         Returns:
-            list: Nested list representing the content of the Excel file.
+            List[List[Any]]: Nested list representing the content of the Excel file with
+            filled merged cells.
         """
-        wb = self.app.books.open(file_path)
-        sheet = wb.sheets[0]
-        data = sheet.used_range.value
-        wb.close()
-        return data
-
-
-def add_is_title_column(df):
-    """
-    Adds an 'is_title' column to the DataFrame, marking the first row of each group as 'yes'
-    and the rest as 'no'.
-    If the column already exists and is not empty, the function does nothing.
-
-    Args:
-        df (pd.DataFrame): The DataFrame to modify.
-
-    Returns:
-        pd.DataFrame: The modified DataFrame with the 'is_title' column added.
-    """
-    # Verify if the column exists and is not empty
-    col_name = "is_title"
-
-    if col_name in df.columns and not df[col_name].dropna().empty:
-        logging.info(f"Column {col_name} exists in the DataFrame and is not empty.")
-    else:
-        # Initialize the is_title column with "no"
-        df[col_name] = "no"
-
-        # Calculate and fill value
-        groups = df.group.unique().tolist()
-        for group in groups:
-            mask = df.group == group
-            first_row_idx = df[mask].index[0]
-            df.loc[first_row_idx, "is_title"] = "yes"
-
-        logging.info(f"Column {col_name} is added and filled.")
-
-    return df
-
-
-def is_all_empty(row):
-    """
-    Check if all items in a row are 'EMPTY', ignoring extra spaces.
-
-    Args:
-        row (str): A string representing a row, with items separated by commas.
-
-    Returns:
-        bool: True if all items are 'EMPTY' (after stripping spaces), False otherwise.
-    """
-    items = [item.strip().upper() for item in row.split(",")]
-    return all(item == "EMPTY" or item == "" for item in items)
-
-
-def add_is_empty_column(df):
-    """
-    Checks if the 'is_empty' column exists in the DataFrame. If it does not exist,
-    it creates the column and fills it with 'yes' or 'no' based on whether the 'text'
-    column is considered empty.
-
-    Args:
-        df (pd.DataFrame): The DataFrame to modify.
-
-    Returns:
-        pd.DataFrame: The modified DataFrame with the 'is_empty' column added.
-    """
-    col_name = "is_empty"
-
-    if col_name in df.columns and not df[col_name].dropna().empty:
-        logging.info(f"Column '{col_name}' exists in the DataFrame and is not empty.")
-    else:
-        # Create 'is_empty' column and fill with 'yes' or 'no'
-        df[col_name] = df["text"].apply(
-            lambda row: "yes" if is_all_empty(row) else "no"
+        logger.info(
+            f"Reading and filling merged cells asynchronously for file: {file_path}"
         )
-        logging.info(f"Column '{col_name}' has been added and filled.")
+        temp_dir = None
+        try:
+            # Create a temporary directory and copy the file
+            temp_dir = tempfile.mkdtemp()
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=".xls", dir=temp_dir
+            ) as temp_file:
+                temp_file_path = temp_file.name
+                shutil.copy(file_path, temp_file_path)
+                logger.info(f"Temporary file created at: {temp_file_path}")
 
-    return df
+            loop = asyncio.get_running_loop()
 
+            # Run synchronous reading logic in a thread pool
+            result = await loop.run_in_executor(
+                None, self._read_and_fill_merged_cells, temp_file_path
+            )
+            return result[0]  # Return only the data matrix
 
-def main():
-    preprocessor = ExcelPreprocessor()  # No lock here
+        except Exception as e:
+            logger.error(f"Error processing file {file_path}: {e}")
+            return []
 
-    source_path = "source.xlsx"  # Replace with your source workbook path
-    target_path = "target.xlsx"  # Replace with your target workbook path
-    source_sheet_name = "SourceSheetName"  # Replace with your source sheet name
-    target_sheet_name = "TargetSheetName"  # Replace with your target sheet name
-
-    source_start_cell = (
-        "A1"  # Replace with the starting cell of the range in the source sheet
-    )
-    target_start_cell = [
-        1,
-        1,
-    ]  # Replace with the starting cell of the range in the target sheet
-
-    last_row_coord = preprocessor.copy_sheet_to_diff_file(
-        source_path,
-        target_path,
-        source_sheet_name,
-        target_sheet_name,
-        source_start_cell,
-        target_start_cell,
-    )
-    print(f"Last row with content: {last_row_coord}")
-
-
-if __name__ == "__main__":
-    main()
+        finally:
+            # Ensure temporary directory is cleaned up
+            if temp_dir:
+                shutil.rmtree(temp_dir)

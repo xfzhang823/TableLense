@@ -18,23 +18,23 @@ The embedding process can take 30 min to a couple of hours depending on your GPU
 # Dependencies
 import os
 import logging
+import logging_config
 import pandas as pd
 import torch
 from transformers import BertTokenizer, BertModel
-from nn_models.simple_nn import SimpleNN
 from tqdm import tqdm
 from file_encoding_detector import detect_encoding
 from read_csv_file import read_csv_file
 
+from nn_models.simple_nn import SimpleNN
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 # Check if CUDA is available (ensure that GPU will be used)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-logging.info(f"Using device: {device}")
+logger.info(f"Using device: {device}")
 
 
 def load_model(model_path, input_dim, device):
@@ -53,7 +53,7 @@ def load_model(model_path, input_dim, device):
     model_nn = SimpleNN(input_dim, hidden_dims).to(device)
     model_nn.load_state_dict(torch.load(model_path))
     model_nn.eval()
-    logging.info("Model loaded and ready for inference.")
+    logger.info("Model loaded and ready for inference.")
     return model_nn
 
 
@@ -78,7 +78,7 @@ def main():
 
     # Load the production data
     df_prod = read_csv_file(prod_data_path)
-    logging.info(f"Production data loaded with {len(df_prod)} rows.")
+    logger.info(f"Production data loaded with {len(df_prod)} rows.")
 
     # Track original indices
     df_prod["original_index"] = df_prod.index
@@ -119,7 +119,7 @@ def main():
 
     # Save the classified data
     final_df.to_csv(predicted_tbl_data_f_path, index=False)
-    logging.info("Classified data saved.")
+    logger.info("Classified data saved.")
     print("Classification and saving completed.")
 
 

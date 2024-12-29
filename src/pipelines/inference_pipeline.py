@@ -21,7 +21,7 @@ import tempfile
 import pandas as pd
 
 from utils.read_csv_file import read_csv_file
-from preprocessing.post_inference_data_cleaning import clean_and_relabel_data
+from data_processing.post_inference_data_cleaning import clean_and_relabel_data
 from inference import run_filter_on_unlabeled_data
 
 from nn_models.simple_nn import SimpleNN
@@ -34,8 +34,8 @@ from inference.inference_utils import (
 )
 
 from project_config import (
-    production_data_path,
-    filtered_production_data_path,
+    preprocessed_2012_data_file,
+    filtered_production_data_file,
     training_data_path,
     model_path,
     test_data_path,
@@ -166,12 +166,12 @@ def main():
     # Set paths with config.py imported paths
     model = model_path
     test_data = test_data_path
-    all_data = production_data_path  # all data
+    all_data = preprocessed_2012_data_file  # all data
     training_data = (
         training_data_path  # training (including both train/test, already labeled)
     )
     filtered_data = (
-        filtered_production_data_path  # production minus training data (not labeled)
+        filtered_production_data_file  # production minus training data (not labeled)
     )
     embeddings = embeddings_inference_path  # embeddings for inference (production data)
     raw_results = raw_inference_output_data_path  # inference results - not cleaned yet
