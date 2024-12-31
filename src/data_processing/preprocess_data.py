@@ -99,7 +99,7 @@ from pathlib import Path
 import os
 import sys
 import logging
-import logger_config
+import logging_config
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import cProfile
@@ -108,11 +108,13 @@ from io import StringIO
 import threading
 from typing import Dict, Callable, List, Optional, Union
 import pandas as pd
-from get_file_names import get_file_names
 
 from data_processing.excel_preprocessor import ExcelPreprocessor
 from project_config import YEARBOOK_2012_DATA_DIR, YEARBOOK_2022_DATA_DIR
-
+from data_processing.preprocessing_utils import (
+    get_filtered_files,
+    process_file_with_timeout_core,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -142,45 +144,6 @@ def profile_function(func: callable, *args, **kwargs) -> any:
     return result
 
 
-def get_filtered_files(
-    source_data_dir: Union[Path, str], filter_criterion: Callable[[str], bool]
-) -> List[str]:
-    """
-    Filter English versions of the excel files based on file names:
-    - yearbook_2012_data_dir: excel files end in "e" or "E" are in English
-    (i.e., ...\China Year Book 2012\html\O1529e.xls")
-    - yearbook_2022_data_dir:  excel files starts in "e" or "E" are in English
-    (i.e., ...\China Year Book 2022\zk\html\E24-14.xls")
-
-    Args:
-        - source_data_dir (str): Directory path for source data.
-        - filter_criterion (Callable[[str], bool]): A function that determines whether
-        a file should be included based on whether if the file name starts or ends
-        with letter "e"
-    Returns:
-        List[str]: Filtered file paths.
-    """
-    # Ensure source_data_dir is a Path object
-    source_data_dir = Path(source_data_dir).resolve()
-
-    # Get all file paths with specified extensions
-    file_paths = [str(file) for file in source_data_dir.glob("*.xlsx")] + [
-        str(file) for file in source_data_dir.glob("*.xls")
-    ]
-
-    # Apply filtering based on directory-specific conventions
-    # Apply the filter criterion
-    filtered_file_paths = [
-        file_path for file_path in file_paths if filter_criterion(Path(file_path).stem)
-    ]
-
-    # Log filtered file paths
-    logger.info(f"First 10 filtered file paths: {filtered_file_paths[:10]}")
-    logger.info(f"Total filtered files: {len(filtered_file_paths)}")
-
-    return filtered_file_paths
-
-
 def process_excel_file(
     file_path: Union[Path, str], yearbook_source: str
 ) -> List[Dict[str, Union[str, int]]]:
@@ -199,59 +162,59 @@ def process_excel_file(
 
     Key Steps:
         1. Flatten Table Rows into Text:
-           - Each row is serialized into a single string, with cell values concatenated
-             using a delimiter (e.g., commas). Missing cells are replaced with "EMPTY".
+        - Each row is serialized into a single string, with cell values concatenated
+            using a delimiter (e.g., commas). Missing cells are replaced with "EMPTY".
 
         2. Assign Unique Identifiers:
-           - Each row is assigned a sequential `row_id` to preserve its original order.
+        - Each row is assigned a sequential `row_id` to preserve its original order.
 
         3. Add Contextual Metadata:
-           - Includes fields such as `group`, `yearbook_source`, and other relevant flags.
+        - Includes fields such as `group`, `yearbook_source`, and other relevant flags.
+
+    Example:
+        >>> result = process_excel_file("example.xls", "2012")
+        >>> print(result)
+        [{'text': 'value1, value2, EMPTY', 'row_id': 1, 'group': 'example',
+        'yearbook_source': '2012'}, ...]
     """
     # Ensure file path is a Path obj
     file_path = Path(file_path)
+
+    # Extract group - stem/file name of the file path
+    group = file_path.stem
 
     # Instantiate ExcelPreprocesser class
     preprocessor = ExcelPreprocessor()
 
     # Return processed data (rows - list of dictionaries)
     return preprocessor.process_excel_full_range(
-        file_path=file_path, yearbook_source=yearbook_source
+        file_path=file_path, yearbook_source=yearbook_source, group=group
     )
 
 
 def process_excel_file_with_timeout(
     file_path: str, yearbook_source: str, timeout: int = 600
-) -> List[Dict[str, Union[str, int]]]:
+) -> list:
     """
     Processes a single Excel file with a timeout.
 
+    This function wraps the `process_excel_file` logic, ensuring the file
+    is processed within a specified timeout. If the processing exceeds the
+    timeout, a TimeoutError is raised.
+
     Args:
-        file_path (str): The path to the Excel file.
-        yearbook_source (str): Metadata to indicate the yearbook source.
-        timeout (int): Timeout in seconds for processing the file.
-        Defaults to 600 seconds.
+        - file_path (str): The path to the Excel file.
+        - yearbook_source (str): Metadata indicating the yearbook source.
+        - timeout (int): The maximum time (in seconds) allowed for processing the file.
 
     Returns:
-        List[Dict[str, Union[str, int]]]: Processed data, or None if processing fails.
+        list: A list of dictionaries containing
+        - processed data for the file, or
+        - None if an error occurs (e.g., timeout or unexpected exception).
     """
-    start_time = time.time()
-    try:
-        logger.debug(f"Starting processing for {file_path}")
-        with ThreadPoolExecutor() as executor:
-            result = executor.submit(
-                process_excel_file, file_path, yearbook_source
-            ).result(timeout=timeout)
-        end_time = time.time()
-        logger.info(
-            f"Processed {os.path.basename(file_path)} in {end_time - start_time:.2f} seconds."
-        )
-        return result
-    except TimeoutError:
-        logger.error(f"Processing timed out for {file_path}")
-    except Exception as e:
-        logger.error(f"Error processing {file_path}: {e}")
-    return None
+    return process_file_with_timeout_core(
+        lambda fp: process_excel_file(fp, yearbook_source), file_path, timeout
+    )
 
 
 def save_to_csv(data: pd.DataFrame, output_path: Union[Path, str]) -> None:

@@ -30,7 +30,7 @@ Modules:
     - get_file_names: Custom module for retrieving file names from a directory.
 
 Functions:
-    - async_process_file_with_timeout(file_path, timeout=600): 
+    - async_process_file_with_timeout(file_path, timeout=1000): 
     Asynchronously processes an Excel file with a timeout.
     - process_all_excel_files_async(source_data_dir, output_csv_path, max_concurrent_tasks=15): 
     Main function to process multiple Excel files asynchronously and save 
@@ -103,9 +103,13 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import asyncio
 import pandas as pd
-from get_file_names import get_file_names
+import pythoncom
+
 from data_processing.excel_preprocessor import ExcelPreprocessor
-from data_processing.preprocess_data import process_excel_file, get_filtered_files
+from data_processing.preprocessing_utils import (
+    get_filtered_files,
+    process_file_with_timeout_core,
+)
 from project_config import YEARBOOK_2012_DATA_DIR, YEARBOOK_2022_DATA_DIR
 
 # Configure logger
@@ -114,40 +118,93 @@ logger = logging.getLogger(__name__)
 
 # Function to process a single excel file w/t timeout
 async def process_excel_file_with_timeout_async(
-    file_path: str, yearbook_source: str, timeout: int = 600
-) -> List[Dict[str, Union[str, int]]]:
+    file_path: Union[Path, str], yearbook_source: str, timeout: int = 1000
+) -> list:
     """
     Asynchronously processes a single Excel file with a timeout.
 
+    This function wraps the 'process_file_with_timeout_core' logic, running it in a
+    non-blocking manner using an executor. It enforces the timeout and ensures proper
+    error handling.
+
+    This function integrates a synchronous processing function (`process_excel_full_range`)
+    into an asynchronous pipeline by leveraging `loop.run_in_executor`. The '_core' method
+    is used to enforce timeouts and ensure consistency between synchronous and asynchronous
+    implementations.
+
+    Key Points:
+    - 'loop.run_in_executor' ensures that the entire file processing task runs in a
+        single thread within the executor's thread pool. This prevents thread-hopping
+        and maintains thread-local context for synchronous operations.
+    - The async event loop delegates the blocking work (e.g., file I/O, CPU-bound
+        computations) to the executor, preventing the event loop from being blocked.
+    - By using `_core`, the same logic for enforcing timeouts and managing processing
+        can be shared between the synchronous and asynchronous versions of the pipeline.
+
+    Why Use `loop.run_in_executor`:
+    - To ensure thread-local variables or resources tied to a specific thread
+        (e.g., an Excel application instance) persist throughout the processing
+        of a single file.
+    - To guarantee that operations for a single file remain in the same thread,
+        avoiding potential race conditions or inconsistent state.
+    - To offload blocking synchronous work to a thread, ensuring the async
+        event loop remains responsive.
+
     Args:
-        file_path (str): The path to the Excel file.
-        yearbook_source (str): Metadata indicating the yearbook source.
-        timeout (int): Timeout in seconds for processing the file.
-        Defaults to 600 seconds.
+    - file_path (str): The path to the Excel file.
+    - yearbook_source (str): Metadata indicating the yearbook source.
+    - timeout (int): Timeout in seconds for processing the file.
+    Defaults to 600 seconds.
 
     Returns:
-        List[Dict[str, Union[str, int]]]: Processed data, or None if processing fails.
+        list: A list of dictionaries containing
+        - processed data for the file,
+        - or None if an error occurs (e.g., timeout or unexpected exception).
     """
-    start_time = time.time()
-    try:
-        logger.debug(f"Starting async processing for {file_path}")
+    # Ensure file path is Path obj
+    file_path = Path(file_path)
 
-        # Call the asynchronous processing method directly
-        preprocessor = ExcelPreprocessor()
-        result = await asyncio.wait_for(
-            preprocessor.process_excel_full_range_async(file_path, yearbook_source),
+    # Instantiate ExcelPreprocessor class
+    preprocessor = ExcelPreprocessor()
+
+    # Extract 'group' from file path stem
+    group = file_path.stem
+
+    # Define the synchronous processing function for `_core`
+    # *loop.run_in_executor ensures that a single thread is allocated to process
+    # *a single file, and that all operations (including async operations) for
+    # *that file will stay within the same thread.
+    def processing_function(fp):
+
+        # Initialize COM for current thread
+        pythoncom.CoInitialize()  # pylint: disable=no-member
+
+        try:
+            # !Must call the sync version process_excel_full_range method
+            # !from the ExcelPreprocessor class b/c we are using loop
+            return preprocessor.process_excel_full_range(
+                file_path=fp,
+                yearbook_source=yearbook_source,
+                group=group,
+            )
+        finally:
+            # Clean up COM for the thread
+            pythoncom.CoUninitialize()  # pylint: disable=no-member
+
+    # Use loop.run_in_executor to offload synchronous `_core` function
+    loop = asyncio.get_running_loop()
+    try:
+        return await loop.run_in_executor(
+            None,
+            process_file_with_timeout_core,  # '_core' function
+            processing_function,
+            file_path,
             timeout,
         )
-
-        end_time = time.time()
-        logger.info(
-            f"Async processed {os.path.basename(file_path)} in {end_time - start_time:.2f} seconds."
-        )
-        return result
     except TimeoutError:
-        logger.error(f"Async processing timed out for {file_path}")
+        logger.error(f"Processing timed out for {file_path}")
     except Exception as e:
-        logger.error(f"Error during async processing of {file_path}: {e}")
+        logger.error(f"Error processing file {file_path}: {e}")
     return None
 
 
@@ -156,8 +213,8 @@ async def process_multiple_excel_files_async(
     source_data_dir: Union[Path, str],
     output_csv_path: str,
     yearbook_source: str,
-    max_concurrent_tasks: int = 15,
-    timeout: int = 600,
+    max_concurrent_tasks: int = 8,
+    timeout: int = 1000,
 ):
     """
     Asynchronously processes multiple Excel files and saves the aggregated data to a CSV.
@@ -178,11 +235,22 @@ async def process_multiple_excel_files_async(
     )
     source_data_dir = Path(source_data_dir)
 
+    logger.info(f"Resolved source_data_dir: {source_data_dir.resolve()}")
+    logger.info(f"YEARBOOK_2012_DATA_DIR: {YEARBOOK_2012_DATA_DIR.resolve()}")
+    logger.info(f"YEARBOOK_2022_DATA_DIR: {YEARBOOK_2022_DATA_DIR.resolve()}")
+
     # Determine filtering criteria based on the directory
     if source_data_dir.resolve().samefile(YEARBOOK_2012_DATA_DIR):
-        filter_criterion = lambda name: name.endswith("e")  # English files by suffix
+        filter_criterion = lambda name: name.lower().endswith(
+            "e"
+        )  # English files by suffix
     elif source_data_dir.resolve().samefile(YEARBOOK_2022_DATA_DIR):
-        filter_criterion = lambda name: name.startswith("e")  # English files by prefix
+        logger.info(
+            f"source data dir: {source_data_dir}"
+        )  # todo: debugging; delete later
+        filter_criterion = lambda name: name.lower().startswith(
+            "e"
+        )  # English files by prefix
     else:
         logger.error(
             f"Unknown source directory: {source_data_dir}. Expected one of: "
@@ -194,6 +262,8 @@ async def process_multiple_excel_files_async(
     file_paths = get_filtered_files(
         source_data_dir=source_data_dir, filter_criterion=filter_criterion
     )
+    logger.info(f"file paths: {file_paths}")
+
     if not file_paths:
         logger.warning("No files to process. Check the directory and filter criteria.")
         return
@@ -234,142 +304,3 @@ async def process_multiple_excel_files_async(
     logger.info(
         f"Asynchronous processing of Excel files in {source_data_dir} completed."
     )
-
-
-# TODO: old code; to be deleted once pipeline debugged
-# def sync_process_excel_full_range(file_path):
-#     """
-#     Synchronous function to process an Excel file using ExcelPreprocessor.
-
-#     Args:
-#         file_path (str): The path to the Excel file.
-
-#     Returns:
-#         list: The processed data from the Excel file.
-#     """
-#     preprocessor = ExcelPreprocessor()
-#     return preprocessor.process_excel_full_range(file_path)
-
-
-# async def main():
-#     """
-#     Main function to process multiple Excel files and save the aggregated data to a CSV file.
-#     """
-#     # Define directories
-#     yearbook_2012_data_dir = r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2012\html"
-#     yearbook_2022_data_dir = r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2022\zk\html"
-#     source_data_dir = yearbook_2012_data_dir
-
-#     # Get Excel file names from the directory
-#     file_paths = get_file_names(
-#         source_data_dir, full_path=True, file_types=[".xlsx", ".xls"]
-#     )
-
-#     # Filter for English files only
-#     if source_data_dir == yearbook_2012_data_dir:
-#         filtered_file_paths = [
-#             file_path
-#             for file_path in file_paths
-#             if os.path.basename(file_path).lower().endswith("e.xls")
-#             or os.path.basename(file_path).lower().endswith("e.xlsx")
-#         ]
-#     elif source_data_dir == yearbook_2022_data_dir:
-#         filtered_file_paths = [
-#             file_path
-#             for file_path in file_paths
-#             if os.path.basename(file_path).lower().startswith("e")
-#         ]
-#     else:
-#         filtered_file_paths = file_paths  # or handle other cases as needed
-
-#     print(filtered_file_paths)
-
-#     # Log the first few filtered file paths
-#     logger.debug(f"First 10 filtered file paths: {filtered_file_paths[:10]}")
-#     logger.debug(f"Total filtered files: {len(filtered_file_paths)}")
-
-#     start_time = time.time()
-#     all_data = []
-
-#     if not filtered_file_paths:
-#         logger.warning("No files to process. Check the directory and filter criteria.")
-#         return
-
-#     # Limit the number of concurrent tasks
-#     semaphore = asyncio.Semaphore(15)
-
-#     async def process_with_semaphore(file_path):
-#         async with semaphore:
-#             logger.info(f"Starting processing for {file_path}")
-#             result = await async_process_file_with_timeout(file_path)
-#             logger.info(f"Finished processing for {file_path}")
-#             return result
-
-#     tasks = [process_with_semaphore(file_path) for file_path in filtered_file_paths]
-#     results = await asyncio.gather(*tasks, return_exceptions=True)
-
-#     for file_path, result in zip(filtered_file_paths, results):
-#         if isinstance(result, Exception):
-#             logger.info(
-#                 f"Skipped {os.path.basename(file_path)} due to processing error: {result}"
-#             )
-#         elif result is not None:
-#             all_data.extend(result)
-#             logger.info(f"{os.path.basename(file_path)} processed.")
-#         else:
-#             logger.info(f"Skipped {os.path.basename(file_path)} due to unknown error")
-
-#     end_time = time.time()
-#     logger.info(f"Total processing time: {end_time - start_time:.2f} seconds.")
-
-#     training_data_csv_path = r"C:\github\china stats yearbook RAG\data\training data\excel sheet training data yrbk 2012.csv"
-#     # missing_data_path = r"C:\github\china stats yearbook RAG\data\training data\excel sheet training data yrbk 2012 missing data.csv"
-
-#     if all_data:
-#         output_data_path = training_data_csv_path
-#         df = pd.DataFrame(all_data)
-#         df.to_csv(output_data_path, index=False)
-#         logger.info(f"Data saved to {output_data_path}")
-#     else:
-#         logger.warning("No data to save. Processing might have failed for all files.")
-
-
-# def process_single_file(file_path):
-#     """
-#     Synchronously processes an Excel file.
-
-#     Args:
-#         file_path (str): The path to the Excel file.
-
-#     Returns:
-#         list: The processed data from the Excel file.
-#     """
-#     try:
-#         logger.info(f"Processing file: {file_path}")
-#         preprocessor = ExcelPreprocessor()
-#         data = preprocessor.process_excel_full_range(file_path)
-#         logger.info(f"Finished processing file: {file_path}")
-#         return data
-#     except Exception as e:
-#         logger.error(f"Error processing file {file_path}: {e}")
-#         return None
-
-
-# def main_single_file():
-#     """
-#     Main function to process a single Excel file and save the aggregated data to a CSV file.
-#     """
-#     file_path = r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2012\html\B0105e.xls"
-#     data = process_single_file(file_path)
-
-#     if data:
-#         output_data_path = r"C:\github\china stats yearbook RAG\data\training data\single_file_output.csv"
-#         df = pd.DataFrame(data)
-#         df.to_csv(output_data_path, index=False)
-#         logger.info(f"Data saved to {output_data_path}")
-#     else:
-#         logger.warning("No data to save. Processing might have failed.")
-
-
-# if __name__ == "__main__":
-#     asyncio.run(main())

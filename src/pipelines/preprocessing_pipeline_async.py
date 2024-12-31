@@ -46,7 +46,7 @@ Configuration:
         - `preprocessed_all_data_file`: Output file for the combined dataset.
 
 Usage:
-    Call `preprocessing_pipeline_async()` to execute the entire pipeline.
+    Call 'preprocessing_pipeline_async()' to execute the entire pipeline.
     Example:
         asyncio.run(preprocessing_pipeline_async())
 
@@ -100,6 +100,11 @@ async def preprocess_files_in_directory_async(
     source_data_dir = Path(source_data_dir)
     output_csv_path = Path(output_csv_path)
 
+    # Todo: debugging; delete later
+    logger.info(f"Listing all files in directory: {source_data_dir}")
+    for file in source_data_dir.iterdir():
+        logger.info(f"File found: {file.name}")
+
     try:
         # Check input data file
         if not source_data_dir.exists():
@@ -112,14 +117,19 @@ async def preprocess_files_in_directory_async(
             logger.warning(f"No Excel files found in directory: {source_data_dir}")
             return
 
+        # Check: if output data file exists already, then early return
+        if output_csv_path.exists():
+            logger.info(
+                f"Output file already exists: {output_csv_path}. Skipping processing."
+            )
+            return
+
         # Check output data file directory exists or not
         if not output_csv_path.parent.exists():
             logger.error(f"Output directory does not exist: {output_csv_path.parent}")
             raise FileNotFoundError(
                 f"Output directory not found: {output_csv_path.parent}"
             )
-
-        logger.info(f"Starting async pipeline for directory: {source_data_dir}")
 
         # Call the processing function from preprocessing_data_async
         await process_multiple_excel_files_async(

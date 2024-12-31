@@ -1,5 +1,7 @@
 """TBA"""
-from pipelines.preprocessing_pipeline import run_preprocessing_pipeline
+
+import asyncio
+from pipelines.preprocessing_pipeline_async import preprocessing_pipeline_async
 from project_config import (
     YEARBOOK_2012_DATA_DIR,
     YEARBOOK_2022_DATA_DIR,
@@ -14,5 +16,13 @@ import logging_config
 logger = logging.getLogger(__name__)
 
 
-def main():
-    run_preprocessing_pipeline(raw_data_file=, processed_data_file=preprocessed_2012_data_file)
+async def main():
+    """Orchestrate pipelines"""
+    # Step 1. Run preprocessing pipeline
+    await preprocessing_pipeline_async()
+
+    # Step 2. Run data labeling pipeline
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

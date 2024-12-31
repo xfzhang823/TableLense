@@ -76,11 +76,25 @@ class ExcelPreprocessor:
     """
 
     def __init__(self):
-        self.app = xw.App(visible=False)
+        """
+        Use lazy initiation instead of eager initiation to avoid issues when running
+        multi-threading and async.
 
-    def __del__(self):
-        """Ensures the Excel application is properly closed."""
-        self.app.quit()
+        COM requires the Excel application instance to remain within the thread where
+        it was created.
+        """
+        self.app = None
+
+    def _intialize_app(self):
+        """Initialize only when called upon"""
+        if self.app is None:
+            self.app = xw.App(visible=False)
+
+    def _close_app(self):
+        """Close the app to clean up resources."""
+        if self.app is not None:
+            self.app.quit()
+            self.app = None
 
     def a1_to_rc(self, a1):
         """Convert Excel A1 notation to 1-indexed row and column."""
@@ -355,37 +369,51 @@ class ExcelPreprocessor:
         Processes the content of an Excel file, handling merged cells by filling each cell
         in the formerly merged area with the original merged cell's value.
 
-        Also:
-        - add
+        Also adds metadata related fields.
 
         Args:
-            file_path (str): The path to the Excel file.
+            - file_path (str): The path to the Excel file.
+            - yearbook_source (str): data source (e.g., "2012").
+            - group (str): The group or table identifier (e.g., derived from the file name).
 
         Returns:
-            pd.DataFrame: DataFrame containing processed rows of the Excel file.
+            Tuple[List[List[Any]], List[Any]]:
+                - Nested list representing the content of the Excel file with filled
+                merged cells.
+                - List of merged cell ranges.
         """
-        logger.info(f"Processing file: {file_path}")
 
-        # Ensure file_path is Path obj
-        file_path = Path(file_path)
+        # Initialize xlwings
+        self._intialize_app()
 
-        # Core processing
-        raw_data, _ = self._read_and_fill_merged_cells(file_path)
+        try:
+            logger.info(f"Processing file: {file_path}")
 
-        # Generate a new list by adding "row_id" and "EMPTY"
-        processed_data = [
-            {
-                "text": ", ".join(
-                    ["EMPTY" if cell is None else str(cell) for cell in row]
-                ),
-                "row_id": idx
-                + 1,  # Sequential row ID for a table ("order" feature for training)
-                "group": group,  # table number (data file name)
-                "yearbook_source": yearbook_source,  # 2012 or 2022 yearbook
-            }
-            for idx, row in enumerate(raw_data)
-        ]
-        return processed_data
+            # Ensure file_path is Path obj
+            file_path = Path(file_path)
+
+            # Core processing
+            raw_data, _ = self._read_and_fill_merged_cells(file_path)
+
+            # Generate a new list by adding "row_id" and "EMPTY"
+            processed_data = [
+                {
+                    "text": ", ".join(
+                        ["EMPTY" if cell is None else str(cell) for cell in row]
+                    ),
+                    "row_id": idx
+                    + 1,  # Sequential row ID for a table ("order" feature for training)
+                    "group": group,  # table number (data file name)
+                    "yearbook_source": yearbook_source,  # 2012 or 2022 yearbook
+                }
+                for idx, row in enumerate(raw_data)
+            ]
+            logger.info(f"Finished processing {file_path}.")
+            return processed_data
+
+        finally:
+            # Close the instance to free up memory slot
+            self._close_app()
 
     def _read_and_fill_merged_cells(self, file_path):
         """
@@ -490,28 +518,35 @@ class ExcelPreprocessor:
             List[Dict[str, Any]]: A list of dictionaries containing processed rows
             with keys `text`, `row_id`, `group`, and `yearbook_source`.
         """
-        logger.info(f"Processing file asynchronously: {file_path}")
+        # Initialize app - xlwings
+        self._intialize_app()
 
-        # Ensure file path is Paht obj
-        file_path = Path(file_path)
+        try:
+            logger.info(f"Processing file asynchronously: {file_path}")
 
-        # Read and process the file asynchronously
-        data = await self.read_and_fill_merged_cells_async(file_path)
+            # Ensure file path is Paht obj
+            file_path = Path(file_path)
 
-        # Process each row
-        processed_data = [
-            {
-                "text": ", ".join(
-                    ["EMPTY" if cell is None else str(cell) for cell in row]
-                ),
-                "row_id": idx + 1,
-                "group": group,
-                "yearbook_source": yearbook_source,
-            }
-            for idx, row in enumerate(data)
-        ]
+            # Read and process the file asynchronously
+            data = await self.read_and_fill_merged_cells_async(file_path)
 
-        return processed_data
+            # Process each row
+            processed_data = [
+                {
+                    "text": ", ".join(
+                        ["EMPTY" if cell is None else str(cell) for cell in row]
+                    ),
+                    "row_id": idx + 1,
+                    "group": group,
+                    "yearbook_source": yearbook_source,
+                }
+                for idx, row in enumerate(data)
+            ]
+
+            return processed_data
+
+        finally:
+            self._close_app()
 
     async def read_and_fill_merged_cells_async(self, file_path: str) -> List[List[Any]]:
         """

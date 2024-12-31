@@ -15,29 +15,54 @@ Description:
 Usage:
     from preprocessing_utils import ExcelPreprocessor
 
-Dependencies: xlwings, pandas, os, logging, sys, asyncio, tempfile, shutil
+Dependencies: xlwings, pandas, os, logger, sys, asyncio, tempfile, shutil
 """
 
 from pathlib import Path
 import os
 import logging
 import sys
-from typing import Union
+from typing import Callable, Union
 import asyncio
 import numpy as np
 import pandas as pd
+from typing import Callable, List
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+import time
 import xlwings as xw
 import tempfile
 import shutil
+import logging_config
 
-# Configure logging
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+# Configure logger
+logger = logging.getLogger(__name__)
+
+
+def add_is_empty_column(df):
+    """
+    Checks if the 'is_empty' column exists in the DataFrame. If it does not exist,
+    it creates the column and fills it with 'yes' or 'no' based on whether the 'text'
+    column is considered empty.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to modify.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the 'is_empty' column added.
+    """
+    col_name = "is_empty"
+
+    if col_name in df.columns and not df[col_name].dropna().empty:
+        logger.info(f"Column '{col_name}' exists in the DataFrame and is not empty.")
+    else:
+        # Create 'is_empty' column and fill with 'yes' or 'no'
+        df[col_name] = df["text"].apply(
+            lambda row: "yes" if is_all_empty(row) else "no"
+        )
+        logger.info(f"Column '{col_name}' has been added and filled.")
+
+    return df
 
 
 def add_is_title_column(df):
@@ -56,7 +81,7 @@ def add_is_title_column(df):
     col_name = "is_title"
 
     if col_name in df.columns and not df[col_name].dropna().empty:
-        logging.info(f"Column {col_name} exists in the DataFrame and is not empty.")
+        logger.info(f"Column {col_name} exists in the DataFrame and is not empty.")
     else:
         # Initialize the is_title column with "no"
         df[col_name] = "no"
@@ -68,9 +93,48 @@ def add_is_title_column(df):
             first_row_idx = df[mask].index[0]
             df.loc[first_row_idx, "is_title"] = "yes"
 
-        logging.info(f"Column {col_name} is added and filled.")
+        logger.info(f"Column {col_name} is added and filled.")
 
     return df
+
+
+def get_filtered_files(
+    source_data_dir: Union[Path, str], filter_criterion: Callable[[str], bool]
+) -> List[str]:
+    """
+    Filter English versions of the excel files based on file names:
+    - yearbook_2012_data_dir: excel files end in "e" or "E" are in English
+    (i.e., ...\China Year Book 2012\html\O1529e.xls")
+    - yearbook_2022_data_dir:  excel files starts in "e" or "E" are in English
+    (i.e., ...\China Year Book 2022\zk\html\E24-14.xls")
+
+    Args:
+        - source_data_dir (str): Directory path for source data.
+        - filter_criterion (Callable[[str], bool]): A function that determines whether
+        a file should be included based on whether if the file name starts or ends
+        with letter "e"
+    Returns:
+        List[str]: Filtered file paths.
+    """
+    # Ensure source_data_dir is a Path object
+    source_data_dir = Path(source_data_dir).resolve()
+
+    # Get all file paths with specified extensions
+    file_paths = [str(file) for file in source_data_dir.glob("*.xlsx")] + [
+        str(file) for file in source_data_dir.glob("*.xls")
+    ]
+
+    # Apply filtering based on directory-specific conventions
+    # Apply the filter criterion
+    filtered_file_paths = [
+        file_path for file_path in file_paths if filter_criterion(Path(file_path).stem)
+    ]
+
+    # Log filtered file paths
+    logger.info(f"First 10 filtered file paths: {filtered_file_paths[:10]}")
+    logger.info(f"Total filtered files: {len(filtered_file_paths)}")
+
+    return filtered_file_paths
 
 
 def is_all_empty(row):
@@ -87,30 +151,55 @@ def is_all_empty(row):
     return all(item == "EMPTY" or item == "" for item in items)
 
 
-def add_is_empty_column(df):
+def process_file_with_timeout_core(
+    process_function: Callable[[str], any], file_path: str, timeout: int
+) -> any:
     """
-    Checks if the 'is_empty' column exists in the DataFrame. If it does not exist,
-    it creates the column and fills it with 'yes' or 'no' based on whether the 'text'
-    column is considered empty.
+    Core logic for processing a file with a timeout, using a specified function.
+
+    This function provides a standardized way to process files with a timeout
+    constraint. It uses a thread pool to execute the provided `process_function`,
+    ensuring that the main thread remains responsive. If the processing exceeds the
+    specified timeout, it raises a `TimeoutError`.
 
     Args:
-        df (pd.DataFrame): The DataFrame to modify.
+        process_function (Callable): The function that defines the processing logic.
+            It should take a single argument (`file_path`) and return the result of
+            the processing.
+        file_path (str): The path to the file to be processed.
+        timeout (int): The maximum time (in seconds) allowed for processing the file.
 
     Returns:
-        pd.DataFrame: The modified DataFrame with the 'is_empty' column added.
+        Any: The result of the `process_function`, or None if an error occurs
+        (e.g., timeout or other exceptions).
+
+    Raises:
+        TimeoutError: If the processing does not complete within the specified timeout.
+        Exception: If an unexpected error occurs during processing.
+
+    Examples:
+        >>> def example_process(file_path):
+        >>>     # Simulate processing logic
+        >>>     return f"Processed {file_path}"
+
+        >>> result = process_file_with_timeout_core(example_process, "example.txt", timeout=10)
+        >>> print(result)
+        "Processed example.txt"
     """
-    col_name = "is_empty"
-
-    if col_name in df.columns and not df[col_name].dropna().empty:
-        logging.info(f"Column '{col_name}' exists in the DataFrame and is not empty.")
-    else:
-        # Create 'is_empty' column and fill with 'yes' or 'no'
-        df[col_name] = df["text"].apply(
-            lambda row: "yes" if is_all_empty(row) else "no"
-        )
-        logging.info(f"Column '{col_name}' has been added and filled.")
-
-    return df
+    start_time = time.time()
+    try:
+        with ThreadPoolExecutor() as executor:
+            result = executor.submit(process_function, file_path).result(
+                timeout=timeout
+            )
+        end_time = time.time()
+        logger.info(f"Processed {file_path} in {end_time - start_time:.2f} seconds.")
+        return result
+    except TimeoutError:
+        logger.error(f"Processing timed out for {file_path}")
+    except Exception as e:
+        logger.error(f"Error processing {file_path}: {e}")
+    return None
 
 
 def main():
