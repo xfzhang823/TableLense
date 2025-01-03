@@ -73,7 +73,7 @@ managing multiple tasks (files) efficiently.
 to ensuring concurrency across files.
 - File processing itself remains synchronous and isolated within its thread.
 
-Key Concepts:
+*Key Concepts:
 *- Concurrency: Tasks are interleaved logically (e.g., via asyncio) to maximize efficiency 
 *without blocking the main event loop.
 *- Parallelism: Threads in ThreadPoolExecutor provide parallel execution for tasks, 
@@ -97,18 +97,21 @@ Limitations:
 import os
 from pathlib import Path
 import logging
-import logging_config
-from typing import Dict, List, Union
+import tempfile
+from typing import Dict, List, Optional, Union
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import asyncio
 import pandas as pd
 import pythoncom
 
+# From internal modules
+import logging_config
 from data_processing.excel_preprocessor import ExcelPreprocessor
 from data_processing.preprocessing_utils import (
     get_filtered_files,
     process_file_with_timeout_core,
+    append_tabular_data_files,
 )
 from project_config import YEARBOOK_2012_DATA_DIR, YEARBOOK_2022_DATA_DIR
 
@@ -210,97 +213,143 @@ async def process_excel_file_with_timeout_async(
 
 # Function to process multiple excel files
 async def process_multiple_excel_files_async(
-    source_data_dir: Union[Path, str],
-    output_csv_path: str,
-    yearbook_source: str,
-    max_concurrent_tasks: int = 8,
-    timeout: int = 1000,
+    source_data_dir: Optional[Path] = None,
+    file_paths: Optional[List[Path]] = None,
+    output_csv_file: Path = None,
+    yearbook_source: str = "",
+    max_concurrent_tasks: int = 10,
+    timeout: int = 800,
 ):
     """
-    Asynchronously processes multiple Excel files and saves the aggregated data to a CSV.
+    Asynchronously process multiple Excel files and save results.
 
     Args:
-        - source_data_dir (Union[Path, str]): Directory containing source Excel files.
-        - output_csv_path (str): Path to save the aggregated CSV file.
-        - yearbook_source (str): Metadata to indicate data source; either "2012" or "2022"
-        (whether from yearbook 2012 or 2022).
-        - max_concurrent_tasks (int): Maximum number of concurrent file processing tasks.
-        - timeout (int): Timeout in seconds for each file. Defaults to 600 seconds.
+        - source_data_dir (Optional[Path]): Directory containing Excel files.
+        - file_paths (Optional[List[Path]]): List of specific file paths to process.
+        - output_csv_file (Path): Path to save the aggregated data.
+        - yearbook_source (str): Yearbook identifier (e.g., "2012" or "2022").
+        - max_concurrent_tasks (int): Maximum number of concurrent tasks.
+        - timeout (int): Timeout in seconds for processing all files.
 
-    Returns:
-        None
+    Raises:
+        - ValueError: If both `source_data_dir` and `file_paths` are provided,
+        or if neither is provided.
     """
-    logger.info(
-        f"Starting asynchronous processing of Excel files in {source_data_dir}."
-    )
-    source_data_dir = Path(source_data_dir)
-
-    logger.info(f"Resolved source_data_dir: {source_data_dir.resolve()}")
-    logger.info(f"YEARBOOK_2012_DATA_DIR: {YEARBOOK_2012_DATA_DIR.resolve()}")
-    logger.info(f"YEARBOOK_2022_DATA_DIR: {YEARBOOK_2022_DATA_DIR.resolve()}")
-
-    # Determine filtering criteria based on the directory
-    if source_data_dir.resolve().samefile(YEARBOOK_2012_DATA_DIR):
-        filter_criterion = lambda name: name.lower().endswith(
-            "e"
-        )  # English files by suffix
-    elif source_data_dir.resolve().samefile(YEARBOOK_2022_DATA_DIR):
-        logger.info(
-            f"source data dir: {source_data_dir}"
-        )  # todo: debugging; delete later
-        filter_criterion = lambda name: name.lower().startswith(
-            "e"
-        )  # English files by prefix
-    else:
-        logger.error(
-            f"Unknown source directory: {source_data_dir}. Expected one of: "
-            f"{YEARBOOK_2012_DATA_DIR}, {YEARBOOK_2022_DATA_DIR}."
+    # * Validation:
+    # * only a directory OR list of file paths is provided, but NOT BOTH
+    # * and NOT both None
+    if source_data_dir and file_paths:
+        raise ValueError(
+            "Provide either `source_data_dir` or `file_paths`, but not both."
         )
-        raise ValueError(f"Invalid source directory: {source_data_dir}")
+    if not source_data_dir and not file_paths:
+        raise ValueError("Either `source_data_dir` or `file_paths` must be provided.")
 
-    # Get filtered file paths
-    file_paths = get_filtered_files(
-        source_data_dir=source_data_dir, filter_criterion=filter_criterion
-    )
-    logger.info(f"file paths: {file_paths}")
+    # Determine filtering criteria
+    filter_criterion = None  # reset to None
+    if source_data_dir:
+        if source_data_dir.resolve().samefile(YEARBOOK_2012_DATA_DIR):
+            filter_criterion = lambda name: name.lower().endswith(
+                "e"
+            )  # English files by suffix
+        elif source_data_dir.resolve().samefile(YEARBOOK_2022_DATA_DIR):
+            filter_criterion = lambda name: name.lower().startswith(
+                "e"
+            )  # English files by prefix
+        else:
+            logger.error(
+                f"Unknown source directory: {source_data_dir}. Expected one of: "
+                f"{YEARBOOK_2012_DATA_DIR}, {YEARBOOK_2022_DATA_DIR}."
+            )
+            raise ValueError(f"Invalid source directory: {source_data_dir}")
 
+        # Use filtering logic if source_data_dir is provided
+        file_paths = get_filtered_files(
+            source_data_dir=source_data_dir,
+            filter_criterion=filter_criterion,
+        )
+
+    # Check if there are files to process
     if not file_paths:
-        logger.warning("No files to process. Check the directory and filter criteria.")
+        logger.warning("No files to process.")
         return
 
-    logger.info(f"Total files to process: {len(file_paths)}")
+    logger.info(
+        f"Processing {len(file_paths)} files from {source_data_dir or 'list of paths'}."
+    )
 
-    # Limit concurrent tasks with a semaphore
+    # Semaphore to limit concurrent tasks
     semaphore = asyncio.Semaphore(max_concurrent_tasks)
 
-    async def process_with_semaphore(file_path):
+    # Track success / failure
+    successfully_processed = []  # To track successfully processed files
+    failed_files = []  # To track failed files
+
+    # * Function to process a SINGLE file (process, save to temp_file, append to aggregate data file)
+    async def process_file(file_path: Path):
         async with semaphore:
-            return await process_excel_file_with_timeout_async(
-                file_path=file_path, yearbook_source=yearbook_source, timeout=timeout
-            )
+            try:
+                logger.debug(f"Processing file: {file_path}")
 
-    # Process files concurrently
-    tasks = [process_with_semaphore(file_path) for file_path in file_paths]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+                # Process file
+                processed_data = await process_excel_file_with_timeout_async(
+                    file_path=file_path,
+                    yearbook_source=yearbook_source,
+                    timeout=timeout,
+                )
 
-    # Aggregate results
-    all_data = []
-    for file_path, result in zip(file_paths, results):
-        if isinstance(result, Exception):
-            logger.error(f"Error processing {file_path}: {result}")
-        elif result is not None:
-            all_data.extend(result)
-        else:
-            logger.warning(f"Skipped {file_path} due to unknown error.")
+                # Save results in temp file, then append to aggregate data output file
+                if not processed_data:
+                    failed_files.append(file_path)
+                    logger.warning(f"No data returned for {file_path}. Skipping.")
 
-    # Convert aggregated data to a DataFrame and save to CSV
-    if all_data:
-        df = pd.DataFrame(all_data)
-        df.to_csv(output_csv_path, index=False)
-        logger.info(f"Aggregated data saved to {output_csv_path}")
-    else:
-        logger.warning("No data to save. Processing might have failed for all files.")
+                # Create a task-specific temporary file, save data to it, and then append
+                # temp file to aggregate output file
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".csv"
+                ) as temp_file:
+                    temp_file_path = Path(temp_file.name)
+                    pd.DataFrame(processed_data).to_csv(temp_file_path, index=False)
+                    logger.info(f"Saved processed data to {temp_file_path}")
 
-    logger.info(
-        f"Asynchronous processing of Excel files in {source_data_dir} completed."
-    )
+                    # Append temp file to the main processed data file
+                    try:
+                        append_tabular_data_files(
+                            source_file=temp_file_path,
+                            target_file=output_csv_file,
+                        )
+                        logger.info(f"Successfully appended data for {file_path}.")
+                    except Exception as e:
+                        logger.error(f"Error appending data from {file_path}")
+                        failed_files.append(file_path)
+                    finally:
+                        # Delete temp file after appending
+                        temp_file_path.unlink()
+                        logger.debug(f"Deleted temp file: {temp_file_path}")
+
+            except PermissionError as e:
+                logger.warning(
+                    f"File lock encountered for {file_path}. Skipping due to permission error."
+                )
+                failed_files.append(file_path)
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout reached for {file_path}. Skipping.")
+                failed_files.append(file_path)
+            except Exception as e:
+                logger.error(f"Error processing file {file_path}: {e}")
+                failed_files.append(file_path)
+
+    # Process all files asynchronously
+    tasks = [process_file(file_path) for file_path in file_paths]
+    try:
+        await asyncio.wait_for(asyncio.gather(*tasks), timeout=timeout)
+    except asyncio.TimeoutError:
+        logger.error("Processing timed out.")
+
+    # Log processing statistics
+    logger.info(f"Finished processing all files.")
+    logger.info(f"Total files: {len(file_paths)}")
+    logger.info(f"Successfully processed files: {len(successfully_processed)}")
+    logger.info(f"Failed files: {len(failed_files)}")
+
+    logger.info(f"Finished processing {len(successfully_processed)} files.")

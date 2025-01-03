@@ -38,7 +38,7 @@ Functions:
 
 Configuration:
     Paths and file names for input directories and output files are configured in the
-    `project_config` module:
+    'project_config' module:
         - `YEARBOOK_2012_DATA_DIR`: Path to the 2012 yearbook directory.
         - `YEARBOOK_2022_DATA_DIR`: Path to the 2022 yearbook directory.
         - `preprocessed_2012_data_file`: Output file for processed 2012 data.
@@ -53,172 +53,174 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Union
+from typing import Callable, Union
 import logging
 import pandas as pd
 import time
 import asyncio
 from data_processing.preprocess_data_async import process_multiple_excel_files_async
+from data_processing.preprocess_missing_data_async import (
+    get_missing_files,
+    preprocess_missing_files_async,
+    append_tabular_data_files,
+)
+from data_processing.preprocessing_utils import have_same_headers, get_filtered_files
+from utils.file_encoding_detector import detect_encoding
 import logging_config
 from project_config import (
     YEARBOOK_2012_DATA_DIR,
     YEARBOOK_2022_DATA_DIR,
-    preprocessed_2012_data_file,
-    preprocessed_2022_data_file,
-    preprocessed_all_data_file,
+    PREPROCESSING_DIR,
+    PREPROCESSED_2012_DATA_FILE,
+    PREPROCESSED_2022_DATA_FILE,
+    PREPROCESSED_ALL_DATA_FILE,
+    PREPROCESSED_TEMP_MISSING_DATA_FILE,
 )
 
 logger = logging.getLogger(__name__)
 
 
-# Preprocess a single directory
-async def preprocess_files_in_directory_async(
-    source_data_dir: Union[Path, str],
-    output_csv_path: Union[Path, str],
+async def preprocessing_pipeline_async(
     yearbook_source: str,
-    max_concurrent_tasks: int = 10,
-    timeout: int = 600,
+    source_data_dir: Path,
+    processed_data_file: Path,
+    filter_function: Callable,
+    max_concurrent_tasks: int = 15,
+    timeout: int = 800,
 ):
     """
-    Wrapper to asynchronously process a directory of Excel files and save results to a CSV.
-    Logs the total time taken for the process in hours:minutes:seconds format.
+    Orchestrates preprocessing of a yearbook, including handling missing files.
 
     Args:
-        source_data_dir (Union[Path, str]): Directory containing Excel files.
-        output_csv_path (Union[Path, str]): Path to save the output CSV file.
-        yearbook_source (str): Metadata indicating the yearbook source.
-        max_concurrent_tasks (int): Maximum concurrent tasks for processing.
-        timeout (int): Timeout for each file in seconds.
+        - yearbook_source (str): Identifier for the yearbook (e.g., "2012" or "2022").
+        - source_data_dir (Path): Directory containing source Excel files.
+        - processed_data_path (Path): Path to the existing processed data CSV.
+        - filter_function (Callable[[str], bool]): Function to filter relevant files.
+        max_concurrent_tasks (int): Maximum number of concurrent tasks.
+        timeout (int): Timeout in seconds for processing each file.
 
     Returns:
         None
     """
     start_time = time.time()  # Record start time
-    logger.info(f"Starting async pipeline for directory: {source_data_dir}")
 
-    # Ensure path params are Path objects
-    source_data_dir = Path(source_data_dir)
-    output_csv_path = Path(output_csv_path)
+    logger.info(f"Starting pipeline for yearbook {yearbook_source}")
 
-    # Todo: debugging; delete later
-    logger.info(f"Listing all files in directory: {source_data_dir}")
-    for file in source_data_dir.iterdir():
-        logger.info(f"File found: {file.name}")
+    # Preprocess base files: Handle the first-time case
 
-    try:
-        # Check input data file
-        if not source_data_dir.exists():
-            logger.error(f"Source directory does not exist: {source_data_dir}")
-            raise FileNotFoundError(f"Source directory not found: {source_data_dir}")
-        if not source_data_dir.is_dir():
-            logger.error(f"Provided path is not a directory: {source_data_dir}")
-            raise NotADirectoryError(f"Expected a directory but got: {source_data_dir}")
-        if not any(source_data_dir.glob("*.[xX][lL][sS]*")):  # Check for Excel files
-            logger.warning(f"No Excel files found in directory: {source_data_dir}")
-            return
+    # Expected headers for the preprocessed data file
+    expected_headers = ["text", "row_id", "group", "yearbook_source"]
 
-        # Check: if output data file exists already, then early return
-        if output_csv_path.exists():
-            logger.info(
-                f"Output file already exists: {output_csv_path}. Skipping processing."
-            )
-            return
+    if not processed_data_file.exists():
+        logger.warning(
+            f"{processed_data_file} does not exist. Creating a new file with expected headers."
+        )
+        # Create an empty CSV with the correct headers
+        pd.DataFrame(columns=expected_headers).to_csv(processed_data_file, index=False)
 
-        # Check output data file directory exists or not
-        if not output_csv_path.parent.exists():
-            logger.error(f"Output directory does not exist: {output_csv_path.parent}")
-            raise FileNotFoundError(
-                f"Output directory not found: {output_csv_path.parent}"
-            )
-
-        # Call the processing function from preprocessing_data_async
-        await process_multiple_excel_files_async(
+        await preprocess_missing_files_async(
             source_data_dir=source_data_dir,
-            output_csv_path=output_csv_path,
+            processed_data_file=processed_data_file,
             yearbook_source=yearbook_source,
+            filter_function=filter_function,
             max_concurrent_tasks=max_concurrent_tasks,
             timeout=timeout,
         )
 
-        end_time = time.time()  # record end time
-        elapsed_time_seconds = end_time - start_time
+    # Add a counter to limit the number of looping to just 3 times
+    max_attempts = 3  # Limit the number of attempts to process missing files
+    attempts = 0  # Track how many times the loop has run
 
-        # Convert elapsed time to hrs:mins:seconds
-        elapsed_time_hms = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_seconds))
+    # Handle missing files iteratively
+    while attempts < max_attempts:
+        # *Filter out the files supposed to be processed (English excel only!)
+        english_xls_files_only = get_filtered_files(
+            source_data_dir=source_data_dir, filter_criterion=filter_function
+        )
+        missing_files = get_missing_files(
+            files_to_check_against=english_xls_files_only,
+            output_file_to_check=processed_data_file,
+        )
+        if not missing_files:
+            logger.info(f"No more missing files for yearbook {yearbook_source}.")
+            break
 
-        logger.info(
-            f"Pipeline completed for directory: {source_data_dir}. "
-            f"Total time taken: {elapsed_time_hms} (hh:mm:ss)."
+        # Process and append missing files
+        await preprocess_missing_files_async(
+            source_data_dir=source_data_dir,
+            processed_data_file=processed_data_file,
+            yearbook_source=yearbook_source,
+            filter_function=filter_function,
+            max_concurrent_tasks=max_concurrent_tasks,
+            timeout=timeout,
         )
 
-    except FileNotFoundError as e:
-        logger.error(f"File or directory not found: {e}")
-    except NotADirectoryError as e:
-        logger.error(f"Invalid directory path: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error in pipeline: {e}", exc_info=True)
+        # Increment attempt counter
+        attempts += 1
 
-
-async def preprocessing_pipeline_async():
-    """
-    Asynchronous preprocessing pipeline to handle multiple yearbook directories.
-
-    Processes 2012 and 2022 yearbook data, combines the results, and
-    saves the aggregated data.
-
-    Steps:
-        1. Process yearbook 2012 data.
-        2. Process yearbook 2022 data.
-        3. Combine the two processed files into a single output.
-
-    Returns:
-        None
-    """
-    start_time = time.time()  # Record start time
-    logger.info("Start preprocessing pipeline.")
-
-    # Set yearbook source values
-    yearbook_source_2012 = "2012"
-    yearbook_source_2022 = "2022"
-
-    # Step 1. Process yearbook 2012 data
-    logger.info("Processing 2012 yearbook data...")
-    await preprocess_files_in_directory_async(
-        source_data_dir=YEARBOOK_2012_DATA_DIR,
-        output_csv_path=preprocessed_2012_data_file,
-        yearbook_source=yearbook_source_2012,
-    )
-
-    # Step 2. Process yearbook 2022 data
-    logger.info("Processing 2022 yearbook data...")
-    await preprocess_files_in_directory_async(
-        source_data_dir=YEARBOOK_2022_DATA_DIR,
-        output_csv_path=preprocessed_2022_data_file,
-        yearbook_source=yearbook_source_2022,
-    )
-
-    # Step 3. Combine the two files
-    try:
-        logger.info("Combining processed files.")
-        df_2012 = pd.read_csv(preprocessed_2012_data_file)
-        df_2022 = pd.read_csv(preprocessed_2022_data_file)
-
-        # Concatenate DataFrames
-        combined_df = pd.concat([df_2012, df_2022], ignore_index=True)
-
-        # Save combined data to CSV
-        combined_df.to_csv(preprocessed_all_data_file, index=False)
-        logger.info(
-            f"Combined data saved to {preprocessed_all_data_file}. Total rows: {len(combined_df)}"
-        )
-    except Exception as e:
-        logger.error(f"Error combining files: {e}", exc_info=True)
-
-    # Log total pipeline time
     end_time = time.time()  # Record end time
     elapsed_time_seconds = end_time - start_time
     elapsed_time_hms = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_seconds))
 
     logger.info(
-        f"Finished preprocessing pipeline. Total time taken: {elapsed_time_hms} (hh:mm:ss)."
+        f"Pipeline for yearbook {yearbook_source} completed. \nTotal time: {elapsed_time_hms} (hh:mm:ss)."
+    )
+
+
+# Orchestrate the pipeline
+async def run_preprocessing_pipeline_async():
+    """
+    Orchestrates the preprocessing of multiple yearbook datasets (2012 and 2022).
+
+    This function invokes the `preprocess_yearbook_pipeline` function for each dataset,
+    ensuring all files are processed, including iterative handling of missing files.
+
+    Key Terms:
+    - processed_data_path: The main file tracking all processed data for the yearbook.
+      This acts as a cumulative checkpoint, storing all successfully processed records.
+    """
+    start_time = time.time()  # Record start time
+    logger.info("Start preprocessing pipeline.")
+
+    # Yearbook 2012 dataset
+    await preprocessing_pipeline_async(
+        yearbook_source="2012",
+        source_data_dir=YEARBOOK_2012_DATA_DIR,
+        processed_data_file=PREPROCESSED_2012_DATA_FILE,
+        filter_function=lambda name: name.lower().endswith("e"),
+        max_concurrent_tasks=10,
+    )
+
+    # Yearbook 2022 dataset
+    await preprocessing_pipeline_async(
+        yearbook_source="2022",
+        source_data_dir=YEARBOOK_2022_DATA_DIR,
+        processed_data_file=PREPROCESSED_2022_DATA_FILE,
+        filter_function=lambda name: name.lower().startswith("e"),
+    )
+
+    # Combine the two
+    try:
+        if have_same_headers(PREPROCESSED_2012_DATA_FILE, PREPROCESSED_2022_DATA_FILE):
+            encoding, _ = detect_encoding(PREPROCESSED_2012_DATA_FILE)
+            df_2012 = pd.read_csv(PREPROCESSED_2012_DATA_FILE, encoding=encoding)
+
+            encoding, _ = detect_encoding(PREPROCESSED_2022_DATA_FILE)
+            df_2022 = pd.read_csv(PREPROCESSED_2022_DATA_FILE, encoding=encoding)
+
+            combined_df = pd.concat([df_2012, df_2022], ignore_index=True)
+            combined_df.to_csv(PREPROCESSED_ALL_DATA_FILE, index=False)
+            logger.info("Combined preprocessed data file created.")
+        else:
+            raise ValueError(f"Headers do not match.")
+    except Exception as e:
+        logger.error(f"Error combining datasets: {e}")
+        raise
+
+    # Log total pipeline time
+    end_time = time.time()  # Record end time
+    elapsed_time_seconds = end_time - start_time
+    elapsed_time_hms = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_seconds))
+    logger.info(
+        f"Finished preprocessing pipeline. Total time: {elapsed_time_hms} (hh:mm:ss)."
     )

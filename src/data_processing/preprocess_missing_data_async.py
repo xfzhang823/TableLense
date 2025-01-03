@@ -1,219 +1,217 @@
 """
-File: preprocess_missing_data_async.py
+File: preprocess_missing_files.py
 Author: Xiao-Fei Zhang
-Date: 2024 Aug 6
+Last Updated: 2024 Dec
 
-Script for Processing Excel Files and Aggregating Data Asynchronously
+Description:
+    This module orchestrates the asynchronous preprocessing of Excel files for
+    datasets like the 2012 and 2022 yearbook datasets. It handles:
+    - Missing file detection and iterative processing,
+    - Directory-level validation and filtering,
+    - Aggregation of results into structured CSV files.
 
-This script:
-- processes all Excel files in a specified directory,
-- filters the files based on a naming convention (English files only),
-- identifies missing files based on a preprocessed dataset, and
-- aggregates their content into a single CSV file,
-which will be labeled for train/test to build a classification model (content is broken into
-rows - each to be labeled).
+    The pipeline ensures that all files are processed, even if interrupted, by
+    iteratively checking for missing files and appending processed data.
 
-The script utilizes multithreading to handle multiple files concurrently.
+Key Features:
+    - Asynchronous processing for scalability and efficiency.
+    - Modular and reusable components for handling missing files.
+    - Validation to ensure headers match when appending data.
+    - Detailed logging to track pipeline progress and issues.
 
-Modules:
-    - os: Provides a way of using operating system dependent functionality.
-    - logging: Provides a way to configure logging in the script.
-    - time: Provides various time-related functions.
-    - concurrent.futures: Provides a high-level interface for asynchronously executing callables.
-    - pandas: Provides data structures and data analysis tools.
-    - asyncio: Provides support for asynchronous I/O, event loops, and coroutines.
-    - preprocessing_utils: Custom module for processing Excel files.
-    - get_file_names: Custom module for retrieving file names from a directory.
-    - file_encoding_detector: Custom module for detecting file encoding.
+Workflow:
+    1. Detect missing files in the directory.
+    2. Process all missing files asynchronously in batches.
+    3. Append processed data to the preprocessed dataset.
+    4. Repeat steps 1-3 until no missing files remain.
 
 Functions:
-    - sync_process_excel_full_range(file_path): Synchronously processes an Excel file.
-    - async_process_file_with_timeout(file_path, timeout=600): Asynchronously processes an Excel file with a timeout.
-    - get_missing_files(file_paths, processed_data_path): Identifies the missing files based on the processed dataset and file paths.
-    - main(): Main function to process multiple Excel files and save the aggregated data to a CSV file.
+    - `get_missing_files`: Identifies files that haven't been processed yet.
+    - `preprocess_missing_files`: Processes missing files asynchronously and saves the result.
+    - `add_preprocessed_missing_data`: Appends newly processed data to the main 
+    preprocessed dataset.
+    - `preprocess_yearbook_pipeline`: Orchestrates the preprocessing of a single dataset, 
+    ensuring all files are processed.
 
 Usage:
-    Run this script as the main module to process Excel files in the specified directory and save
-    the aggregated data to a CSV file.
+    Call `preprocess_yearbook_pipeline` for individual datasets like "2012" and "2022."
+    Example:
+        asyncio.run(preprocess_yearbook_pipeline(...))
 
 Example:
-    $ python preprocess_missing_data_async.py
+    $ python preprocess_missing_files.py
 
-Note:
-    Ensure that the preprocessing_utils and get_file_names modules are available in the Python path.
-    The script requires pandas and xlwings libraries to be installed.
+Dependencies:
+    - pandas: For data aggregation and file I/O.
+    - asyncio: For handling asynchronous file processing.
+    - logging: For detailed progress and error tracking.
+    - Custom modules: `preprocess_data_async`, `preprocessing_utils`, and CSV utilities.
+
 """
 
-import os
+from pathlib import Path
 import logging
-import sys
-import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from typing import Callable, Union
+from itertools import islice
+import tempfile
 import pandas as pd
 import asyncio
-from .preprocessing_utils import ExcelPreprocessor
-from get_file_names import get_file_names
-from file_encoding_detector import detect_encoding
-
-# Configure logging
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+from data_processing.preprocess_data_async import process_multiple_excel_files_async
+from data_processing.preprocessing_utils import (
+    get_filtered_files,
+    have_same_headers,
+    concatenate_tabular_data_files,
+    append_tabular_data_files,
 )
+from utils.file_encoding_detector import detect_encoding
+import logging_config
+
+# Config logger
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
-def sync_process_excel_full_range(file_path):
+def get_missing_files(
+    files_to_check_against: list[Path], output_file_to_check: Path
+) -> list[Path]:
     """
-    Synchronous function to process an Excel file using ExcelPreprocessor.
+    Identify missing files by comparing a list of files to check against a dataset of
+    processed files.
 
     Args:
-        file_path (str): The path to the Excel file.
+        - files_to_check_against (list[Path]): List of file paths to check for missing files.
+        - data_output_file_to_check (Path): Path to the CSV file containing the dataset of
+        processed files.
 
     Returns:
-        list: The processed data from the Excel file.
+        list[Path]: A list of file paths that are missing from the processed dataset.
+
+    Raises:
+        FileNotFoundError: If the processed data CSV file does not exist.
+        KeyError: If the "group" column is missing in the processed data.
     """
-    preprocessor = ExcelPreprocessor()
-    return preprocessor.process_excel_full_range(file_path)
+    logger.info("Trying to find missing files...")
 
-
-async def async_process_file_with_timeout(file_path, timeout=600):
-    """
-    Asynchronously processes an Excel file with a timeout.
-
-    Args:
-        file_path (str): The path to the Excel file.
-        timeout (int): Timeout in seconds for processing each file. Defaults to 600 seconds.
-
-    Returns:
-        list: The processed data from the Excel file, or None if an error occurred.
-    """
-    start_time = time.time()
-    try:
-        loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor() as executor:
-            future = loop.run_in_executor(
-                executor, sync_process_excel_full_range, file_path
-            )
-            result = await asyncio.wait_for(future, timeout)
-        end_time = time.time()
-        logging.debug(
-            f"Processed {os.path.basename(file_path)} in {end_time - start_time:.2f} seconds."
+    if not output_file_to_check.exists():
+        logger.warning(
+            f"Processed data CSV file {output_file_to_check} does not exist. Assuming all files are missing."
         )
-        return result
-    except TimeoutError:
-        logging.error(f"Processing timed out for {file_path}")
+        return files_to_check_against
+
+    try:
+        # Load processed data
+        encoding, _ = detect_encoding(output_file_to_check)
+        df_processed = pd.read_csv(output_file_to_check, encoding=encoding, header=0)
+        processed_file_names = set(
+            df_processed["group"].unique()
+        )  # Use a set for faster lookups
+
+        logger.info(
+            f"processed_file_names (first 10): {list(islice(processed_file_names, 10))}"
+        )
+
+        # Identify missing files
+        missing_file_paths = [
+            path
+            for path in files_to_check_against
+            if path.stem not in processed_file_names
+        ]
+
+        logger.info(f"Identified {len(missing_file_paths)} missing files.")
+
+        # TODO: debugging; delete later
+        logger.info(f"Missing files (first 5): {missing_file_paths[:5]}")
+
+        return missing_file_paths
+
+    except KeyError as e:
+        logger.error(f"Column 'group' not found in the processed data CSV file: {e}")
+        raise
     except Exception as e:
-        logging.error(f"Error processing {file_path}: {e}")
-    return None
+        logger.error(f"An error occurred while processing the data: {e}")
+        raise
 
 
-def get_missing_files(file_paths, processed_data_path):
+async def preprocess_missing_files_async(
+    source_data_dir: Path,
+    processed_data_file: Path,
+    yearbook_source: str,
+    filter_function: Callable,
+    max_concurrent_tasks: int = 8,
+    timeout: int = 800,
+):
     """
-    Gets the missing files based on the processed dataset and file paths.
+    Asynchronously preprocess missing Excel files and append the data to the preprocessed file.
+
+    This function identifies files in the source directory that have not yet been processed
+    (tracked in the `processed_data_file`), processes those missing files asynchronously,
+    saves their content to a temporary file, and appends the temporary file's content to
+    the aggregate preprocessed data file (`processed_data_file`).
+
+    File Inputs and Outputs:
+        - 'source_data_dir': The directory containing all Excel files to check for missing files.
+        - 'processed_data_file': The main aggregate CSV file that tracks all preprocessed data.
+          Newly processed missing files are appended to this file.
+        - Temporary File: A temporary CSV file is created during processing to store the
+          output of the missing files before appending to `processed_data_file`.
+          This file is automatically created and then deleted after appending using temp file lib
+          (no need to manually create or input)
 
     Args:
-        file_paths (list): List of file paths to check.
-        processed_data_path (str): Path to the CSV file containing processed data.
+        - source_data_dir (Path): Directory containing Excel files to check for missing files.
+        - processed_data_file (Path): Path to the CSV file that stores the aggregate preprocessed data.
+          Missing file content is appended to this file after processing.
+        - yearbook_source (str): Identifier for the yearbook (e.g., "2012" or "2022").
+        - filter_function (Callable[[str], bool]): A function to filter relevant files based on
+        naming criteria.
+        - max_concurrent_tasks (int): Maximum number of concurrent tasks for processing files.
+        - timeout (int): Timeout in seconds for processing each file.
 
     Returns:
-        list: A list of filtered file paths for the missing files.
+        None
+
+    Usage:
+        Use as part of a pipeline to process and aggregate missing Excel data. The function identifies
+        missing files, processes them asynchronously, and appends their content to the preprocessed file.
+
+    Example:
+        await preprocess_missing_files_async(
+            source_data_dir=Path("/path/to/source/data"),
+            processed_data_file=Path("/path/to/processed_data.csv"),
+            yearbook_source="2012",
+            filter_function=lambda name: name.lower().endswith("e"),
+            max_concurrent_tasks=10,
+            timeout=800,
+        )
     """
-    # Extract file names from paths
-    all_file_names = [
-        os.path.splitext(os.path.basename(path))[0] for path in file_paths
-    ]
 
-    # Check for file encoding
-    encoding, _ = detect_encoding(processed_data_path)
+    logger.info(f"Starting preprocessing for missing files in {source_data_dir}")
 
-    df_processed = pd.read_csv(processed_data_path, encoding=encoding, header=0)
-    processed_file_names = df_processed["group"].unique().tolist()
-
-    missing_file_paths = [
-        path
-        for path, name in zip(file_paths, all_file_names)
-        if name not in processed_file_names
-    ]
-
-    return missing_file_paths
-
-
-async def main():
-    """
-    Main function to process multiple Excel files and save the aggregated data to a CSV file.
-    """
-    # Set up source data's directory
-    yearbook_2012_data_dir = r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2012\html"
-    yearbook_2022_data_dir = r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2022\zk\html"
-    source_data_dir = yearbook_2012_data_dir
-    csv_path = r"C:\github\china stats yearbook RAG\data\training data\excel sheet training data yrbk 2012.csv"
-
-    # Get Excel file names from the directory
-    file_paths = get_file_names(
-        source_data_dir, full_path=True, file_types=[".xlsx", ".xls"]
+    # From the src file dir, get list of paths of files need to be processed (preprocessed)
+    file_paths = get_filtered_files(
+        source_data_dir=source_data_dir, filter_criterion=filter_function
     )
 
-    # Filter for English files only
-    if source_data_dir == yearbook_2012_data_dir:
-        filtered_file_paths = [
-            file_path
-            for file_path in file_paths
-            if os.path.basename(file_path).lower().endswith("e.xls")
-            or os.path.basename(file_path).lower().endswith("e.xlsx")
-        ]
-    elif source_data_dir == yearbook_2022_data_dir:
-        filtered_file_paths = [
-            file_path
-            for file_path in file_paths
-            if os.path.basename(file_path).lower().startswith("e")
-        ]
-    else:
-        filtered_file_paths = file_paths  # or handle other cases as needed
+    # Get the list of paths of src data files need to process (missing files)
+    missing_file_paths = get_missing_files(
+        files_to_check_against=file_paths,
+        output_file_to_check=processed_data_file,
+    )
+    logger.debug(f"Total missing files: {len(missing_file_paths)}")
 
-    filtered_file_paths = get_missing_files(filtered_file_paths, csv_path)
-    logging.debug(f"Total filtered files: {len(filtered_file_paths)}")
+    if not missing_file_paths:
+        logger.warning("No missing files to process.")
+        return  # If no missing files, then early return
 
-    if not filtered_file_paths:
-        logging.warning("No files to process. Check the directory and filter criteria.")
-        return
+    # Process missing files directly
+    await process_multiple_excel_files_async(
+        source_data_dir=None,  # We pass None because we are providing specific files
+        file_paths=missing_file_paths,
+        output_csv_file=processed_data_file,  # Append directly to processed_data_file
+        yearbook_source=yearbook_source,
+        max_concurrent_tasks=max_concurrent_tasks,
+        timeout=timeout,
+    )
 
-    start_time = time.time()
-    all_data = []
-
-    # Limit the number of concurrent tasks
-    semaphore = asyncio.Semaphore(15)
-
-    async def process_with_semaphore(file_path):
-        async with semaphore:
-            result = await async_process_file_with_timeout(file_path)
-            return result
-
-    tasks = [process_with_semaphore(file_path) for file_path in filtered_file_paths]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    for file_path, result in zip(filtered_file_paths, results):
-        if isinstance(result, Exception):
-            logging.error(
-                f"Skipped {os.path.basename(file_path)} due to processing error: {result}"
-            )
-        elif result is not None:
-            all_data.extend(result)
-        else:
-            logging.error(f"Skipped {os.path.basename(file_path)} due to unknown error")
-
-    end_time = time.time()
-    logging.info(f"Total processing time: {end_time - start_time:.2f} seconds.")
-
-    output_path = r"C:\github\china stats yearbook RAG\data\training data\excel sheet training data yrbk 2012 missing data.csv"
-
-    if all_data:
-        df = pd.DataFrame(all_data)
-        df.to_csv(output_path, index=False)
-        logging.info(f"Data saved to {output_path}")
-    else:
-        logging.warning("No data to save. Processing might have failed for all files.")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    logger.info(f"Finished processing missing files for {yearbook_source}.")

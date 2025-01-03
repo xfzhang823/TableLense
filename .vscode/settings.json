@@ -1,0 +1,22 @@
+{
+    "notebook.formatOnSave.enabled": true,
+    "interactiveWindow.promptToSaveOnClose": true,
+    "python.formatting.provider": "black",
+    "files.saveConflictResolution": "overwriteFileOnDisk",
+    "black-py.useIntegratedTerminal": true,
+    "workbench.settings.applyToAllProfiles": [],
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "json.schemas": [],
+    "editor.formatOnSave": true,
+    "notebook.formatOnCellExecution": true,
+    "notebook.output.wordWrap": true,
+    "notebook.output.textLineLimit": 500,
+    "notebook.output.scrolling": true,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "settingsSync.keybindingsPerPlatform": false,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "settingsSync.ignoredSettings": [],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
+}

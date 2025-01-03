@@ -39,6 +39,53 @@ import logging_config
 logger = logging.getLogger(__name__)
 
 
+def append_tabular_data_files(
+    source_file: Union[Path, str],
+    target_file: Union[Path, str],
+):
+    """
+    Append data from the source file to the target file after verifying headers match.
+
+    This function checks if the headers of the two files match and appends the
+    content of the `source_file` to the `target_file` if they do.
+    If the headers do not match, it raises a ValueError to ensure data consistency.
+
+    Args:
+        source_file (Union[Path, str]): Path to the file containing data to append.
+        target_file (Union[Path, str]): Path to the file to which data will be appended.
+
+    Raises:
+        ValueError: If the headers of the two files do not match.
+    """
+    source_file, target_file = map(Path, [source_file, target_file])
+
+    # Check if both files exist
+    if not source_file.exists():
+        raise FileNotFoundError(f"Source file not found: {source_file}")
+    if not target_file.exists():
+        raise FileNotFoundError(f"Target file not found: {target_file}")
+
+    # Validate file types to be csv and excel only
+    supported_extensions = {".csv", ".xlsx", ".xls"}
+    for file, file_type in [(source_file, "source"), (target_file, "target")]:
+        if file.suffix.lower() not in supported_extensions:
+            raise ValueError(
+                f"Unsupported {file_type} file type: {file.suffix}. Only CSV or Excel files are allowed."
+            )
+
+    if have_same_headers(source_file, target_file):
+        concatenate_tabular_data_files(
+            target_file=target_file,
+            source_file=source_file,
+            skip_header=True,
+        )
+        logger.info(f"Appended data from {source_file} to {target_file}")
+    else:
+        raise ValueError(
+            f"{source_file} and {target_file} do not have the same header!"
+        )
+
+
 def add_is_empty_column(df):
     """
     Checks if the 'is_empty' column exists in the DataFrame. If it does not exist,
@@ -98,9 +145,73 @@ def add_is_title_column(df):
     return df
 
 
+def have_same_headers(file1: Path, file2: Path) -> bool:
+    """
+    Check if two CSV files have the same headers.
+
+    Args:
+        file1 (Path): Path to the first CSV file.
+        file2 (Path): Path to the second CSV file.
+
+    Returns:
+        bool: True if headers are the same, False otherwise.
+    """
+    # Validate file type (csv or excel)
+    supported_extensions = {".csv", ".xlsx", ".xls"}
+    for file, file_type in [(file1, "source"), (file2, "target")]:
+        if file.suffix.lower() not in supported_extensions:
+            raise ValueError(
+                f"Unsupported {file_type} file type: {file.suffix}. Only CSV or Excel files are allowed."
+            )
+
+    # Read files to compare headers
+    with file1.open("r") as f1, file2.open("r") as f2:
+        header1 = f1.readline().strip()  # Read and strip newline/whitespace
+        header2 = f2.readline().strip()
+        return header1 == header2
+
+
+def concatenate_tabular_data_files(
+    target_file: Path, source_file: Path, skip_header: bool = True
+):
+    """
+    Concatenate the source file to the target file.
+
+    Args:
+        target_file (Path): Path to the target file (where to save the combined data).
+        source_file (Path): Path to the source file (data to append).
+        skip_header (bool): Whether to skip the header of the source file when appending.
+    """
+
+    def read_file(file: Path) -> pd.DataFrame:
+        if file.suffix == ".csv":
+            return pd.read_csv(file)
+        elif file.suffix in [".xlsx", ".xls"]:
+            return pd.read_excel(file)
+        else:
+            raise ValueError(f"Unsupported file type: {file.suffix}")
+
+    def write_file(file: Path, df: pd.DataFrame):
+        if file.suffix == ".csv":
+            df.to_csv(file, index=False)
+        elif file.suffix in [".xlsx", ".xls"]:
+            df.to_excel(file, index=False)
+        else:
+            raise ValueError(f"Unsupported file type: {file.suffix}")
+
+    target_data = read_file(target_file)
+    source_data = read_file(source_file)
+
+    if skip_header:
+        source_data = source_data.iloc[1:]  # Skip the header row
+
+    combined_data = pd.concat([target_data, source_data], ignore_index=True)
+    write_file(target_file, combined_data)
+
+
 def get_filtered_files(
     source_data_dir: Union[Path, str], filter_criterion: Callable[[str], bool]
-) -> List[str]:
+) -> List[Path]:
     """
     Filter English versions of the excel files based on file names:
     - yearbook_2012_data_dir: excel files end in "e" or "E" are in English
@@ -113,26 +224,31 @@ def get_filtered_files(
         - filter_criterion (Callable[[str], bool]): A function that determines whether
         a file should be included based on whether if the file name starts or ends
         with letter "e"
+
     Returns:
-        List[str]: Filtered file paths.
+        List[Path]: Filtered file paths.
     """
     # Ensure source_data_dir is a Path object
     source_data_dir = Path(source_data_dir).resolve()
 
     # Get all file paths with specified extensions
-    file_paths = [str(file) for file in source_data_dir.glob("*.xlsx")] + [
-        str(file) for file in source_data_dir.glob("*.xls")
-    ]
+    file_paths = list(source_data_dir.glob("*.xlsx")) + list(
+        source_data_dir.glob("*.xls")
+    )
+    logger.debug(f"Number of file paths before filtering: {len(file_paths)}")
 
-    # Apply filtering based on directory-specific conventions
-    # Apply the filter criterion
+    # Apply filtering based on the criterion
     filtered_file_paths = [
-        file_path for file_path in file_paths if filter_criterion(Path(file_path).stem)
+        file_path for file_path in file_paths if filter_criterion(file_path.stem)
     ]
 
-    # Log filtered file paths
-    logger.info(f"First 10 filtered file paths: {filtered_file_paths[:10]}")
-    logger.info(f"Total filtered files: {len(filtered_file_paths)}")
+    logger.debug(
+        f"Number of file paths after filtering: {len(filtered_file_paths)}"
+    )  # For degugging
+    logger.debug(f"First 5 filtered file paths: {filtered_file_paths[:5]}")
+
+    if not filtered_file_paths:
+        logger.warning(f"No files matched the filter criterion in {source_data_dir}.")
 
     return filtered_file_paths
 

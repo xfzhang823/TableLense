@@ -54,24 +54,27 @@ raw_data_path = INPUT_DIR / "raw_data.csv"  # all the original tables in csv for
 PREPROCESSING_DIR = (
     INPUT_OUTPUT_DIR / "preprocessing"
 )  # preprocessed data (each row converted to arragy friendly format)
-preprocessed_2012_data_file = (
+PREPROCESSED_2012_DATA_FILE = (
     PREPROCESSING_DIR / "preprocessed_data_2012.csv"
 )  # output of raw data; input of filtered production data
-preprocessed_2022_data_file = (
+PREPROCESSED_2022_DATA_FILE = (
     PREPROCESSING_DIR / "preprocessed_data_2022.csv"
 )  # output of raw data; input of filtered production data
-preprocessed_all_data_file = (
+PREPROCESSED_ALL_DATA_FILE = (
     PREPROCESSING_DIR / "preprocessed_data_all.csv"
 )  # output of raw data; input of filtered production data
+PREPROCESSED_TEMP_MISSING_DATA_FILE = (
+    PREPROCESSING_DIR / "preprocessed_temp_missing.csv"
+)
 
-filtered_production_data_file = (
+FILTERED_PRODUCTION_DATA_FILE = (
     PREPROCESSING_DIR / "filtered_production_data.csv"
 )  # production data excluding training data; all unlabeled preprocessed data
 # output of production data; input of raw inference data
 
 # Training Input/Output
 TRAINING_INPUT_OUTPUT_DIR = INPUT_OUTPUT_DIR / "training"  # final output
-training_data_path = (
+TRAINING_DATA_PATH = (
     TRAINING_INPUT_OUTPUT_DIR / "training_data.csv"
 )  # manually labeled data to train the model
 

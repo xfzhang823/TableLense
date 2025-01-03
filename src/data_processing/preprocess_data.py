@@ -1,4 +1,6 @@
 """
+#TODO: Need to update the codes (Only the async version is debugged and fixed!)
+
 File: preprocess_data.py
 Author: Xiao-Fei Zhang
 Last updated: 2024 Dec
@@ -259,9 +261,13 @@ def process_multiple_excel_files(
 
     # Determine the filtering criterion based on the source directory
     if Path(source_data_dir).resolve().samefile(YEARBOOK_2012_DATA_DIR):
-        filter_criterion = lambda name: name.endswith("e")  # English files by suffix
+        filter_criterion = lambda name: name.endswith(
+            ("e", "E")
+        )  # English files by suffix
     elif Path(source_data_dir).resolve().samefile(YEARBOOK_2022_DATA_DIR):
-        filter_criterion = lambda name: name.startswith("e")  # English files by prefix
+        filter_criterion = lambda name: name.startswith(
+            ("e", "E")
+        )  # English files by prefix
     else:
         logger.error(
             f"Unknown source directory: {source_data_dir}. Expected one of: "

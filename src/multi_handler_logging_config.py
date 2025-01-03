@@ -1,29 +1,3 @@
-"""
-Logging Configuration Module
-
-This module provides a centralized and customizable logging setup for applications.
-It supports logging to both a single file and the console, with detailed formatting
-and log rotation. Logs are organized by session, with each session generating a
-unique log file.
-
-Features:
-- Session-based log files (e.g., `username_YYYYMMDD_HHMMSS.log`).
-- Rotating file handler with configurable size and backup count.
-- Detailed log formatting including timestamp, module, filename, line number, and log level.
-- Console logging with simplified formatting for real-time monitoring.
-
-Usage:
-    >>> from logging_config import configure_logging
-    >>> configure_logging(app_name="my_app")
-
-    >>> import logging
-    >>> logger = logging.getLogger(__name__)
-    >>> logger.info("This is an info message")
-
-Version: 2.0
-Author: Xiao-Fei Zhang
-"""
-
 import logging
 import logging.handlers
 import os
@@ -33,12 +7,14 @@ from utils.find_project_root import find_project_root
 
 
 class EnhancedLoggerSetup:
+    """Class for custom logger."""
+
     def __init__(self, app_name=None):
         """
-        Initialize logging setup with application name and logging directories.
+        Initialize logging setup with application name and logging directories
 
         Args:
-            app_name (str, optional): Name of your application.
+            app_name (str, optional): Name of your application
         """
         self.app_name = app_name or "app"
         self.root_dir = find_project_root()
@@ -68,30 +44,37 @@ class EnhancedLoggerSetup:
         print(f"[DEBUG] Retrieved username: {username}")
         return username
 
-    def get_log_file_path(self):
+    def get_log_file_path(self, log_type):
         """
-        Constructs the log file path based on the username and session ID.
+        Constructs the log file path based on the username, session ID, and log type.
+
+        Args:
+            log_type (str): Type of log file (error, debug, info)
 
         Returns:
-            str: Log file path.
+            str: Log file path
         """
-        filename = f"{self.username}_{self.session_id}.log"
+        filename = f"{self.username}_{self.session_id}_{log_type}.log"
         log_path = os.path.join(self.logs_dir, filename)
-        print(f"[DEBUG] Log file path: {log_path}")
+        print(f"[DEBUG] Log file path for {log_type}: {log_path}")
         return log_path
 
-    def setup_file_handler(self):
+    def setup_file_handler(self, log_type, level):
         """
-        Sets up a rotating file handler for the log file.
+        Sets up a rotating file handler for the specified log type.
+
+        Args:
+            log_type (str): Type of log file
+            level (int): Logging level for this handler
 
         Returns:
-            RotatingFileHandler: Configured file handler.
+            RotatingFileHandler: Configured file handler
         """
-        log_path = self.get_log_file_path()
+        log_path = self.get_log_file_path(log_type)
         handler = logging.handlers.RotatingFileHandler(
             log_path, maxBytes=10 * 1024 * 1024, backupCount=5  # 10MB
         )
-        handler.setLevel(logging.DEBUG)  # Capture all levels (DEBUG and above)
+        handler.setLevel(level)
         handler.setFormatter(self.detailed_formatter)
         return handler
 
@@ -100,40 +83,42 @@ class EnhancedLoggerSetup:
         Sets up a console handler for logging.
 
         Returns:
-            StreamHandler: Configured console handler.
+            StreamHandler: Configured console handler
         """
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(
-            logging.INFO
-        )  # Only show INFO and above in the console
+        console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(self.console_formatter)
         return console_handler
 
     def configure_logging(self):
         """
-        Configures logging settings with a single file handler and a console handler.
+        Configures logging settings with multiple handlers and formatters.
         """
         try:
             # Get the root logger
             logger = logging.getLogger()
-            logger.setLevel(logging.DEBUG)  # Set the base logging level
+            logger.setLevel(logging.DEBUG)
 
             # Remove any existing handlers
             for handler in logger.handlers[:]:
                 logger.removeHandler(handler)
 
-            # Set up a single file handler for all log levels
-            file_handler = self.setup_file_handler()
+            # Set up handlers for different log levels
+            error_handler = self.setup_file_handler("error", logging.ERROR)
+            debug_handler = self.setup_file_handler("debug", logging.DEBUG)
+            info_handler = self.setup_file_handler("info", logging.INFO)
             console_handler = self.setup_console_handler()
 
-            # Add handlers
-            logger.addHandler(file_handler)
+            # Add all handlers
+            logger.addHandler(error_handler)
+            logger.addHandler(debug_handler)
+            logger.addHandler(info_handler)
             logger.addHandler(console_handler)
 
             # Prevent duplicate logs
             logger.propagate = False
 
-            print(f"[DEBUG] Logging successfully configured with a single file handler")
+            print(f"[DEBUG] Logging successfully configured with multiple handlers")
 
         except Exception as e:
             print(f"Failed to configure logging: {e}")
@@ -145,7 +130,7 @@ def configure_logging(app_name=None):
     Main function to configure logging system.
 
     Args:
-        app_name (str, optional): Name of the application.
+        app_name (str, optional): Name of the application
     """
     logger_setup = EnhancedLoggerSetup(app_name)
     logger_setup.configure_logging()
