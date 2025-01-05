@@ -35,7 +35,7 @@ from inference.inference_utils import (
 
 from project_config import (
     PREPROCESSED_2012_DATA_FILE,
-    TRAINING_DATA_PATH,
+    TRAINING_DATA_FILE,
     model_path,
     test_data_path,
     embeddings_inference_path,
@@ -167,7 +167,7 @@ def main():
     test_data = test_data_path
     all_data = PREPROCESSED_2012_DATA_FILE  # all data
     training_data = (
-        TRAINING_DATA_PATH  # training (including both train/test, already labeled)
+        TRAINING_DATA_FILE  # training (including both train/test, already labeled)
     )
     filtered_data = (
         filtered_production_data_file  # production minus training data (not labeled)

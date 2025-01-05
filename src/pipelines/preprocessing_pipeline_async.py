@@ -64,7 +64,10 @@ from data_processing.preprocess_missing_data_async import (
     preprocess_missing_files_async,
     append_tabular_data_files,
 )
-from data_processing.preprocessing_utils import have_same_headers, get_filtered_files
+from src.data_processing.data_processing_utils import (
+    have_same_headers,
+    get_filtered_files,
+)
 from utils.file_encoding_detector import detect_encoding
 import logging_config
 from project_config import (
@@ -74,7 +77,6 @@ from project_config import (
     PREPROCESSED_2012_DATA_FILE,
     PREPROCESSED_2022_DATA_FILE,
     PREPROCESSED_ALL_DATA_FILE,
-    PREPROCESSED_TEMP_MISSING_DATA_FILE,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,10 +143,16 @@ async def preprocessing_pipeline_async(
             files_to_check_against=english_xls_files_only,
             output_file_to_check=processed_data_file,
         )
-        if not missing_files:
-            logger.info(f"No more missing files for yearbook {yearbook_source}.")
-            break
+        # if not missing_files:
+        #     logger.info(f"No more missing files for yearbook {yearbook_source}.")
+        #     break
 
+        # Set a 20 missing file threshold to break from the pipeline
+        if len(missing_files) <= 20:
+            logger.info(
+                f"20 or less missing files for yearbook {yearbook_source}. Skip to the next pipeline."
+            )
+            break
         # Process and append missing files
         await preprocess_missing_files_async(
             source_data_dir=source_data_dir,

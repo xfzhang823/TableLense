@@ -41,8 +41,8 @@ def change_label_columns(df):
 
 def clean_text(value):
     """
-    Clean a single value by removing non-printable characters and excessive spaces,
-    and strip extra spaces.
+    Clean a single value by removing non-printable characters, excessive spaces,
+    and stripping special characters that may break training.
 
     Args:
         value (str): The value to clean.
@@ -53,10 +53,14 @@ def clean_text(value):
     if isinstance(value, str):
         # Remove non-printable characters
         cleaned_value = re.sub(r"[^\x20-\x7E]", "", value)
-        # Remove any excessive spaces within the value
+        # Optionally remove specific problematic characters (e.g., parentheses)
+        cleaned_value = re.sub(
+            r"[^\w\s,.%-]", "", cleaned_value
+        )  # Keep words, spaces, commas, periods, dashes, and %
+        # Remove excessive spaces
         cleaned_value = " ".join(cleaned_value.split()).strip()
         return cleaned_value
-    return value  # Return the value as is if it's not a string
+    return value  # Return as is if not a string
 
 
 def is_all_empty(row):

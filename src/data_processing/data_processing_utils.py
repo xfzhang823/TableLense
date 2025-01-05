@@ -86,6 +86,20 @@ def append_tabular_data_files(
         )
 
 
+def is_all_empty(row):
+    """
+    Check if all items in a row are 'EMPTY', ignoring extra spaces.
+
+    Args:
+        row (str): A string representing a row, with items separated by commas.
+
+    Returns:
+        bool: True if all items are 'EMPTY' (after stripping spaces), False otherwise.
+    """
+    items = [item.strip().upper() for item in row.split(",")]
+    return all(item == "EMPTY" or item == "" for item in items)
+
+
 def add_is_empty_column(df):
     """
     Checks if the 'is_empty' column exists in the DataFrame. If it does not exist,
@@ -130,19 +144,43 @@ def add_is_title_column(df):
     if col_name in df.columns and not df[col_name].dropna().empty:
         logger.info(f"Column {col_name} exists in the DataFrame and is not empty.")
     else:
-        # Initialize the is_title column with "no"
+        # Initialize 'is_title' column with "no"
         df[col_name] = "no"
 
-        # Calculate and fill value
-        groups = df.group.unique().tolist()
-        for group in groups:
-            mask = df.group == group
-            first_row_idx = df[mask].index[0]
+        # Calculate and fill value for each (group, yearbook_source) combination
+        for (group, yearbook_source), group_df in df.groupby(
+            ["group", "yearbook_source"]
+        ):
+            first_row_idx = group_df.index[0]
             df.loc[first_row_idx, "is_title"] = "yes"
 
         logger.info(f"Column {col_name} is added and filled.")
 
     return df
+
+
+def clean_text(value):
+    """
+    Clean a single value by removing non-printable characters, excessive spaces,
+    and stripping special characters that may break training.
+
+    Args:
+        value (str): The value to clean.
+
+    Returns:
+        str: The cleaned value.
+    """
+    if isinstance(value, str):
+        # Remove non-printable characters
+        cleaned_value = re.sub(r"[^\x20-\x7E]", "", value)
+        # Optionally remove specific problematic characters (e.g., parentheses)
+        cleaned_value = re.sub(
+            r"[^\w\s,.%-]", "", cleaned_value
+        )  # Keep words, spaces, commas, periods, dashes, and %
+        # Remove excessive spaces
+        cleaned_value = " ".join(cleaned_value.split()).strip()
+        return cleaned_value
+    return value  # Return as is if not a string
 
 
 def have_same_headers(file1: Path, file2: Path) -> bool:
@@ -251,20 +289,6 @@ def get_filtered_files(
         logger.warning(f"No files matched the filter criterion in {source_data_dir}.")
 
     return filtered_file_paths
-
-
-def is_all_empty(row):
-    """
-    Check if all items in a row are 'EMPTY', ignoring extra spaces.
-
-    Args:
-        row (str): A string representing a row, with items separated by commas.
-
-    Returns:
-        bool: True if all items are 'EMPTY' (after stripping spaces), False otherwise.
-    """
-    items = [item.strip().upper() for item in row.split(",")]
-    return all(item == "EMPTY" or item == "" for item in items)
 
 
 def process_file_with_timeout_core(

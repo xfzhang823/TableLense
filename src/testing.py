@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from utils.file_encoding_detector import detect_encoding
 
-from data_processing.preprocessing_utils import get_filtered_files
+from src.data_processing.data_processing_utils import get_filtered_files
 from project_config import YEARBOOK_2022_DATA_DIR, YEARBOOK_2012_DATA_DIR
 
 filtered_files_2012 = get_filtered_files(

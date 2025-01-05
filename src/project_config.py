@@ -48,7 +48,8 @@ INPUT_OUTPUT_DIR = BASE_DIR / "input_output"  # input/output data folder
 # Sub directories
 # Input
 INPUT_DIR = INPUT_OUTPUT_DIR / "input"
-raw_data_path = INPUT_DIR / "raw_data.csv"  # all the original tables in csv format
+RAW_DATA_FILE = INPUT_DIR / "raw_data.csv"  # all the original tables in csv format
+SECTION_GROUP_MAPPING_FILE = INPUT_DIR / "yearbook_source_section_group_mapping.xlsx"
 
 # Preprocessing Input/Output
 PREPROCESSING_DIR = (
@@ -63,9 +64,9 @@ PREPROCESSED_2022_DATA_FILE = (
 PREPROCESSED_ALL_DATA_FILE = (
     PREPROCESSING_DIR / "preprocessed_data_all.csv"
 )  # output of raw data; input of filtered production data
-PREPROCESSED_TEMP_MISSING_DATA_FILE = (
-    PREPROCESSING_DIR / "preprocessed_temp_missing.csv"
-)
+# PREPROCESSED_TEMP_MISSING_DATA_FILE = (
+#     PREPROCESSING_DIR / "preprocessed_temp_missing.csv"
+# )
 
 FILTERED_PRODUCTION_DATA_FILE = (
     PREPROCESSING_DIR / "filtered_production_data.csv"
@@ -73,10 +74,11 @@ FILTERED_PRODUCTION_DATA_FILE = (
 # output of production data; input of raw inference data
 
 # Training Input/Output
-TRAINING_INPUT_OUTPUT_DIR = INPUT_OUTPUT_DIR / "training"  # final output
-TRAINING_DATA_PATH = (
-    TRAINING_INPUT_OUTPUT_DIR / "training_data.csv"
+TRAINING_DIR = INPUT_OUTPUT_DIR / "training"  # final output
+TRAINING_DATA_FILE = (
+    TRAINING_DIR / "training_data.csv"
 )  # manually labeled data to train the model
+TRAINING_INFERENCE_DATA_FILE = TRAINING_DIR / "training_and_inference_data_v1.csv"
 
 # Model Input/Output
 # outputs of training; inputs of inference

@@ -2,7 +2,7 @@
 documents/
 
 # Ignore the analysis_tools directory
-analysis_tools/
+/src/inspect_tools.ipynb
 
 # Ignore the data folder for now
 data/

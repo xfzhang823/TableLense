@@ -108,7 +108,7 @@ import pythoncom
 # From internal modules
 import logging_config
 from data_processing.excel_preprocessor import ExcelPreprocessor
-from data_processing.preprocessing_utils import (
+from src.data_processing.data_processing_utils import (
     get_filtered_files,
     process_file_with_timeout_core,
     append_tabular_data_files,
