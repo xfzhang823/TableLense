@@ -8,7 +8,7 @@ Data normalization and cleansing to get data ready for inference (label predicti
 """
 
 import pandas as pd
-from file_encoding_detector import detect_encoding
+from utils.file_encoding_detector import detect_encoding
 
 
 def read_and_merge_data(source_data_path, mapping_f_path):

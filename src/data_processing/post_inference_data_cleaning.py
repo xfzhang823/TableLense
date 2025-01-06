@@ -9,7 +9,7 @@ Description: Further data cleansing and manual data labeling on data after infer
 import re
 import logging
 import pandas as pd
-from file_encoding_detector import detect_encoding
+from utils.file_encoding_detector import detect_encoding
 
 # Set up logging
 logging.basicConfig(

@@ -19,10 +19,12 @@ model_path="model.pth", test_data_path="test_data.pth", indices_path="train_test
 Train the neural network model with L2 Regularization and Early Stopping.
 """
 
+import sys
+from pathlib import Path
 import logging
 import pickle
 import os
-import sys
+from typing import Callable, Tuple, Union
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
@@ -32,12 +34,13 @@ from sklearn.model_selection import GroupShuffleSplit
 
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.decomposition import PCA
-from read_csv_file import read_csv_file
-from read_exce_file import read_excel_file
+from utils.read_csv_file import read_csv_file
+from utils.read_exce_file import read_excel_file
+import logging_config
 
-# Logging
-# logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-# logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+
+# logger
+logger = logging.getLogger(__name__)
 
 
 # Check if CUDA is available
@@ -45,7 +48,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
 
-def load_data(file_path):
+def load_data(file_path: Union[Path, str]) -> pd.DataFrame:
     """
     Load data from an Excel or CSV file.
 
@@ -55,8 +58,11 @@ def load_data(file_path):
     Returns:
         pd.DataFrame: Loaded data.
     """
+    # Ensure file_path is Path obj
+    file_path = Path(file_path)
+
     # Determine the file extension
-    file_extension = os.path.splitext(file_path)[1].lower()
+    file_extension = file_path.suffix
 
     # Load the file based on its extension
     if file_extension == ".csv":
@@ -163,7 +169,7 @@ def process_batch(
         group_name = (
             batch_df["group"].iloc[0] if "group" in batch_df.columns else "Unknown"
         )
-        logging.error(f"{missing_columns} missing in group {group_name}.")
+        logger.error(f"{missing_columns} missing in group {group_name}.")
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Initialize the tokenizer and model
@@ -293,23 +299,73 @@ def dynamic_batch_processing(df, process_batch, batch_size=128, is_inference=Fal
     return results  # Return the results
 
 
-# High level abstraction function to generate embeddings
-def generate_embeddings(df):
+def generate_embeddings(
+    df: pd.DataFrame,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
-    Generate embeddings by calling on dynamic_batching/process_batch functions from
-    training_utils.py file
+    Generate embeddings from a DataFrame by processing batches of data.
+
+    This function processes the input DataFrame using dynamic batching and extracts
+    embeddings, labels, original indices, and groups associated with each row of the data.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing the data to process.
+            The DataFrame should include columns such as:
+            - 'text': Text data for embedding generation.
+            - 'row_id': Row identifiers.
+            - 'is_title': Flags indicating if a row is a title.
+            - 'is_empty': Flags indicating if a row is empty.
+            - 'label': Class labels for supervised training.
+            - 'group': Group identifiers to preserve group-based batching.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+            A tuple containing:
+            - embeddings (np.ndarray): Feature embeddings generated from
+            the text data.
+            - labels (np.ndarray): Labels associated with the embeddings.
+            - original_indices (np.ndarray): Original row indices from
+            the input DataFrame.
+            - groups (np.ndarray): Group identifiers for each data point.
+
+    Raises:
+        ValueError: If required columns are missing in the input DataFrame.
+
+    Example:
+        >>> df = pd.read_excel("data.xlsx")
+        >>> embeddings, labels, original_indices, groups = generate_embeddings(df)
+        >>> print(embeddings.shape)  # (num_rows, embedding_dim)
     """
+    logger = logging.getLogger(__name__)
+
+    # Log the start of the process
+    logger.info("Starting embedding generation...")
+
+    # Ensure required columns exist
+    required_columns = ["text", "row_id", "is_title", "is_empty", "label", "group"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        logger.error(f"Missing required columns: {missing_columns}")
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    # Process batches and generate embeddings
     results = dynamic_batch_processing(df, process_batch)
+
+    # Concatenate batch results into single arrays
     embeddings = np.concatenate([r[0] for r in results], axis=0)
     labels = np.concatenate([r[1] for r in results], axis=0)
     original_indices = np.concatenate([r[2] for r in results], axis=0)
     groups = np.concatenate([r[3] for r in results], axis=0)
+
+    # Log the completion of the process
+    logger.info("Embedding generation completed successfully.")
+
     return embeddings, labels, original_indices, groups
 
 
 # Function to generate embeddings or load from disk
 def load_or_generate_embeddings(
-    data_path, embeddings_save_path, generate_embeddings_func
+    data_file: Path, embeddings_file: Path, generate_embeddings_func: Callable
 ):
     """
     Load embeddings from disk if available, otherwise generate embeddings and save them.
@@ -322,15 +378,15 @@ def load_or_generate_embeddings(
     Returns:
         tuple: A tuple containing embeddings, labels, original indices, and groups.
     """
-    if os.path.exists(embeddings_save_path):
-        logging.info("Loading embeddings from disk...")
-        with open(embeddings_save_path, "rb") as f:
+    if embeddings_file.exists():
+        logger.info("Loading embeddings from disk...")
+        with open(embeddings_file, "rb") as f:
             embeddings, labels, original_indices, groups = pickle.load(f)
     else:
-        logging.info("Loading data from Excel file...")
-        df = load_data(data_path)
+        logger.info("Loading data from Excel file...")
+        df = load_data(data_file)
         embeddings, labels, original_indices, groups = generate_embeddings_func(df)
-        with open(embeddings_save_path, "wb") as f:
+        with open(embeddings_file, "wb") as f:
             pickle.dump((embeddings, labels, original_indices, groups), f)
 
     return embeddings, labels, original_indices, groups
@@ -372,7 +428,7 @@ def train_model(
     best_val_loss = float("inf")
     no_improvement_count = 0
 
-    logging.info("Starting training...")
+    logger.info("Starting training...")
     for epoch in range(num_epochs):
         model.train()
         epoch_loss = 0
@@ -414,7 +470,7 @@ def train_model(
         avg_val_loss = val_loss / len(X_test)
 
         # Log the loss every epoch
-        logging.info(
+        logger.info(
             f"Epoch {epoch+1}/{num_epochs}, Training Loss: {avg_train_loss}, Validation Loss: {avg_val_loss}"
         )
 
@@ -457,7 +513,7 @@ def train_model(
         else:
             no_improvement_count += 1
             if no_improvement_count >= patience:
-                logging.info("Early stopping triggered")
+                logger.info("Early stopping triggered")
                 break
 
-    logging.info("Training completed and model saved")
+    logger.info("Training completed and model saved")

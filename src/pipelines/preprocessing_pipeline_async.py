@@ -64,7 +64,7 @@ from data_processing.preprocess_missing_data_async import (
     preprocess_missing_files_async,
     append_tabular_data_files,
 )
-from src.data_processing.data_processing_utils import (
+from data_processing.data_processing_utils import (
     have_same_headers,
     get_filtered_files,
 )
@@ -79,7 +79,63 @@ from project_config import (
     PREPROCESSED_ALL_DATA_FILE,
 )
 
+
+# Setup logger
 logger = logging.getLogger(__name__)
+
+
+# Gatekeeper function for the pipeline (go or no go)
+async def meet_missing_files_threshold(
+    source_data_dir: Path,
+    processed_data_file: Path,
+    threshold: int,
+    yearbook_source: str,
+) -> bool:
+    """
+    Checks if the number of missing files in the output meets the threshold.
+
+    Args:
+        source_data_dir (Path): The directory containing source Excel files.
+        processed_data_file (Path): The CSV file containing already processed data.
+        threshold (int): The maximum number of missing files allowed.
+        yearbook_type (str): The yearbook type ('2012' or '2022') to determine filtering.
+
+    Returns:
+        bool: True if the missing files exceed the threshold, otherwise False.
+    """
+    # Determine the filter function based on yearbook type
+    logger.info("Check for how many missing files...")
+    if yearbook_source == "2012":
+        filter_function = lambda name: name.lower().endswith("e")  # English by suffix
+    elif yearbook_source == "2022":
+        filter_function = lambda name: name.lower().startswith("e")  # English by prefix
+    else:
+        raise ValueError(f"Invalid yearbook type: {yearbook_source}")
+
+    # Get the list of English-only Excel files
+    english_xls_files_only = get_filtered_files(
+        source_data_dir=source_data_dir, filter_criterion=filter_function
+    )
+
+    # If processed data file does not exist, treat all files as missing
+    if not processed_data_file.exists():
+        print(
+            f"Processed data file '{processed_data_file}' not found. Assuming all files are missing."
+        )
+        missing_files = english_xls_files_only
+    else:
+        # Get the list of missing files by comparing against the processed data file
+        missing_files = get_missing_files(
+            files_to_check_against=english_xls_files_only,
+            output_file_to_check=processed_data_file,
+        )
+
+    # Log the missing files count
+    missing_count = len(missing_files)
+    logger.info(f"Total missing files: {missing_count}, Threshold: {threshold}")
+
+    # Determine if the missing files exceed the threshold
+    return missing_count >= threshold
 
 
 async def preprocessing_pipeline_async(
@@ -180,13 +236,35 @@ async def run_preprocessing_pipeline_async():
     """
     Orchestrates the preprocessing of multiple yearbook datasets (2012 and 2022).
 
-    This function invokes the `preprocess_yearbook_pipeline` function for each dataset,
+    This function checks if missing files meets the threshold.
+    If so, it invokes the `preprocess_yearbook_pipeline` function for each dataset,
     ensuring all files are processed, including iterative handling of missing files.
 
     Key Terms:
     - processed_data_path: The main file tracking all processed data for the yearbook.
       This acts as a cumulative checkpoint, storing all successfully processed records.
     """
+    # Check no. of missing files to start or abort the pipeline
+    # Check 2012 yearbook data
+    meet_threshold_2012 = meet_missing_files_threshold(
+        source_data_dir=YEARBOOK_2012_DATA_DIR,
+        processed_data_file=PREPROCESSED_2012_DATA_FILE,
+        threshold=15,
+        yearbook_source="2012",
+    )
+    meet_threshold_2022 = meet_missing_files_threshold(
+        source_data_dir=YEARBOOK_2022_DATA_DIR,
+        processed_data_file=PREPROCESSED_2012_DATA_FILE,
+        threshold=15,
+        yearbook_source="2012",
+    )
+    if meet_threshold_2012 and meet_threshold_2022:
+        logger.info(
+            "Alreayd meet the max missing files threshold. Skip to the next pipeline."
+        )
+        return  # Early return
+
+    # Start the pipeline
     start_time = time.time()  # Record start time
     logger.info("Start preprocessing pipeline.")
 

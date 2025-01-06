@@ -12,46 +12,64 @@ Steps:
 4. Identify and print misclassified 'header' samples.
 """
 
+from pathlib import Path
 import os
 import sys
 import logging
+from typing import List, Tuple
 import pandas as pd
 from pprint import pprint
 import torch
 from sklearn.metrics import classification_report
 import torch.nn as nn
 from nn_models.simple_nn import SimpleNN  # Use absolute import
+from utils.read_csv_file import read_csv_file
 
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 
-def load_model_and_test_data(model_dir_path, original_data_path):
+def load_model_and_test_data(
+    model_file: Path, test_data_file: Path, training_data_file: Path
+) -> Tuple[torch.Tensor, torch.Tensor, int, List[int], List[str]]:
     """
-    Load test data, model, and original data.
+    Load test data, model, and original data using paths from project_config.
 
     Args:
-        - model_dir_path (str): Path to the model directory.
-        - original_data_path (str): Path to the original data file (train/text dataset).
+        - model_path_file (Path): path to the model file (expect MODEL_PTH_FILE)
+        - test_data_path_file (Path): path to the test data file
+        (expect TEST_DATA_PTH_FILE)
+        - original_data_file (Path): path to the training data file
+        (expect TRAINING_DATA_FILE)
 
     Returns:
-        tuple: Contains loaded test data, original data, and text data.
+        Tuple: Contains:
+            - model_path (Path): Path to the trained model file.
+            - X_test (torch.Tensor): Test data features.
+            - y_test (torch.Tensor): Test data labels.
+            - input_dim (int): Number of input features.
+            - test_original_indices (List[int]): Original indices of the test data.
+            - text_data (List[str]): Original text data.
     """
-    model_path = os.path.join(model_dir_path, "simple_nn_model.pth")
-    test_data_path = os.path.join(model_dir_path, "test_data.pth")
-
     # Load the original data to get the text field
-    original_df = pd.read_excel(original_data_path)
+    if training_data_file.suffix in [".xls", ".xlsx", ".xlsm"]:
+        original_df = read_csv_file(training_data_file, engine="openpyxl")
+    elif training_data_file.suffix == ".csv":
+        original_df = read_csv_file(training_data_file)
+    else:
+        raise ValueError(f"Unsupported file format: {training_data_file.suffix}")
+
     text_data = original_df["text"].tolist()
 
-    test_data = torch.load(test_data_path)
+    # Load test data
+    test_data = torch.load(test_data_file)
     X_test = torch.tensor(test_data["X_test"], dtype=torch.float32)
     y_test = torch.tensor(test_data["y_test"], dtype=torch.long)
-    input_dim = test_data["input_dim"]  # input_dim is the number of features
+    input_dim = test_data["input_dim"]
     test_original_indices = test_data["original_indices"]
 
-    return model_path, X_test, y_test, input_dim, test_original_indices, text_data
+    return X_test, y_test, input_dim, test_original_indices, text_data
 
 
 def evaluate_model(model_path, X_test, y_test, input_dim):

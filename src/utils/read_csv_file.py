@@ -2,7 +2,7 @@
 
 import logging
 import pandas as pd
-from file_encoding_detector import detect_encoding
+from utils.file_encoding_detector import detect_encoding
 
 
 def read_csv_file(file_path):

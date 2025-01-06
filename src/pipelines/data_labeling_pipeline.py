@@ -62,6 +62,7 @@ def data_labeling_pipeline(
     df = pd.merge(
         df_processed_data, df_mapping, on=["group", "yearbook_source"], how="left"
     )
+    logger.info(f"df columns after the merge: {df.columns}")
 
     # Step 3. Add is_empty
     df = add_is_empty_column(df)
@@ -71,15 +72,29 @@ def data_labeling_pipeline(
     df = add_is_title_column(df)
     logger.info("Added is_title column.")
 
-    # Step 4. Label rows based on text content
+    # Step 5. Add "original_index" (helps with training/inference)
+    df["original_index"] = df.index  # Preserve the original DataFrame index as a column
+
+    # Step 6. Label rows based on text content
     df["label"] = "unlabeled"
     df.loc[df["is_title"] == "yes", "label"] = "title"
     df.loc[df["is_empty"] == "yes", "label"] = "empty"
     logger.info("Added label column.")
 
-    # Step 5. Re-arrange column order
+    # Step 7. Re-arrange column order
+    logger.info(f"df columns before re-arrangement: {df.columns}")
     df = df[
-        "text", "group", "yearbook_source", "section", "is_empty", "is_title", "label"
+        [
+            "text",
+            "yearbook_source",
+            "section",
+            "group",
+            "row_id",
+            "is_empty",
+            "is_title",
+            "original_index",
+            "label",
+        ]
     ]
     logger.info("Re-arranged df column order.")
 

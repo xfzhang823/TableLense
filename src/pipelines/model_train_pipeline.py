@@ -4,203 +4,302 @@ Author: Xiao-Fei Zhang
 Date: last updated on 2024 Dec
 
 Description:
-This script orchestrates the full pipeline for training a simple 4-hidden-layer 
-neural network model on text data. It includes steps for generating or loading embeddings, 
-splitting data into training and testing sets, and training the model while handling 
-data imbalance, regularization, and early stopping. 
+This script orchestrates the full pipeline for training, evaluating, and reporting results 
+for a neural network model on text data. The pipeline follows a modular approach by separating 
+data preparation, model training, and evaluation into distinct functions. 
+
+This structure enhances readability, reusability, and maintainability.
 
 Key techniques include:
 - Compensating for data imbalance: Class weights (table_data outweighs other classes)
 - Preventing overfitting: L2 regularization, dropout, and early stopping
 - Combined both text embedding and positional parameters (added row_id and other features)
 
-The pipeline saves the following files:
+Key features and techniques include:
+- Compensating for data imbalance: Class weights are used to balance the impact of 
+different classes.
+- Preventing overfitting: L2 regularization, dropout, and early stopping.
+- Combined both text embeddings and positional parameters 
+(such as row_id and other features).
+
+Module Structure:
+1. prepare_data: Handles embedding generation, data loading, and splitting into training 
+and testing sets.
+2. train_model_nn: Manages the model training process, including defining the neural network 
+architecture and running the training loop.
+3. evaluate_and_report: Handles model evaluation, prints classification metrics, 
+and lists misclassified samples.
+4. run_training_pipeline: Orchestrates the entire process by calling the above functions 
+sequentially.
+
+Pipeline Outputs:
 - simple_nn_model.pth: 
-  This file contains the state dictionary of the trained neural network model. 
-  The state dictionary is a Python dictionary object that maps each layer to 
-  its parameters (e.g., weights and biases). This file will be used to load 
-  the trained model's parameters for inference or further training later on.
-
 - embeddings.pkl: 
-  This file contains the generated embeddings, labels, original indices, and groups 
-  for the dataset, saved as a serialized Python object using the pickle module. 
-  These embeddings are used as input features for model training.
-
 - test_data.pth: 
-  This file contains a dictionary with the test dataset and input dimension size used 
-  during training. 
-  It includes:
+- train_test_indices.pth: 
+
+- simple_nn_model.pth: Contains the state dictionary of the trained neural network model, 
+which includes weights and biases for all layers. It contains the state dictionary of 
+the trained neural network model. The state dictionary is a Python dictionary object that 
+maps each layer to its parameters (e.g., weights and biases). This file will be used to load 
+the trained model's parameters for inference or further training later on.
+
+- embeddings.pkl: Stores generated embeddings, labels, original indices, and groups for 
+the dataset, saved as a serialized Python object. These embeddings are used as input features 
+for model training.
+
+- test_data.pth: Contains the test dataset and metadata such as input dimension 
+and original indices for further analysis.
+  * It includes:
   * X_test: The feature embeddings of the test set.
   * y_test: The labels of the test set.
   * input_dim: The dimension of the input features used to initialize the model.
   * original_indices: The original indices of the test set from the initial dataset, 
   *used to map the test data back to the original data for further analysis.
 
-- train_test_indices.pth: 
-  This file contains the training and test indices used during the data split. It includes:
+- train_test_indices.pth: Stores the training and testing indices for reference and 
+reproducibility.
+*It includes:
   * train_idx: The indices of the training set.
   * test_idx: The indices of the test set.
   * original_indices: The original indices of the test set from the initial dataset, 
   *used to map the test data back to the original data for further analysis.
 
 Training/Testing Process:
-1. Load or generate embeddings:
-   The script first checks if the embeddings file already exists. 
-   - If yes, it loads the embeddings from disk.
-   - If no, it reads the data from an Excel file, tokenizes, and generates embeddings 
-   using a pre-trained BERT model, then saves the embeddings to disk.
+1. Load or Generate Embeddings:
+   - If embeddings exist, they are loaded from disk.
+   - If not, the script reads the data from an Excel file, tokenizes it, 
+   generates embeddings using a pre-trained BERT model, and saves the embeddings.
 
-2. Split the data:
-   The script combines text embeddings with additional features, extracts labels, 
-   and splits the data into training and testing sets using GroupShuffleSplit, 
-   ensuring that samples from the same group are not represented in both sets.
+2. Split the Data:
+   - Combines text embeddings with additional features.
+   - Splits the data into training and testing sets using GroupShuffleSplit to ensure that 
+   samples from the same group are not split across training and testing sets.
 
-3. Train the model:
-   The script defines the neural network architecture with dropout and L2 regularization, 
-   sets up the loss function with class weights, and trains the model, performing forward 
-   and backward passes, computing the loss (including L2 regularization), and 
-   updating the model parameters.
+3. Train the Model:
+   - Defines the neural network architecture with dropout and L2 regularization.
+   - Sets up the loss function with class weights to handle class imbalance.
+   - Performs forward and backward passes, computes the loss (including L2 regularization), 
+   and updates model parameters.
 
-4. Validate and save the model:
-   The model is validated on the test set, and the best model is saved based on 
-   validation loss. Early stopping is implemented to prevent overfitting, 
-   and the test data and indices are saved for further analysis.
+4. Evaluate and Save the Model:
+   - Evaluates the model on the test set and prints a classification report.
+   - Prints misclassified "header" samples for further analysis.
+   - Implements early stopping to prevent overfitting and saves the best-performing model.
 """
 
 # Dependencies
-import os
-import logging
 from pathlib import Path
-import pandas as pd
+import logging
+import time
 import torch
-import torch.optim as optim
 from torch.nn import CrossEntropyLoss
+from torch.optim import Adam
 from tqdm import tqdm
-
-# Custom classes/functions
+import pandas as pd
+import numpy as np
 from nn_models.simple_nn import SimpleNN
 from nn_models.training_utils import (
-    generate_embeddings,
-    load_or_generate_embeddings,
     load_data,
+    load_or_generate_embeddings,
     split_data,
     train_model,
+    generate_embeddings,
 )
 from nn_models.evaluate_model import (
     evaluate_model,
     load_model_and_test_data,
     print_misclassified_headers,
 )
-
-# from models.train_model import train_model
-
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+from project_config import (
+    TRAINING_DATA_FILE,
+    MODEL_PTH_FILE,
+    TRAINING_EMBEDDINGS_PKL_FILE,
+    TEST_DATA_PTH_FILE,
+    TRAIN_TEST_IDX_PTH_FILE,
+    EVALUATION_REPORT_FILE,
 )
 
-
-def build_training_pipeline(
-    training_data_path,
-    model_save_path,
-    embeddings_save_path,
-    test_data_path,
-    indices_path,
-):
-
-    # Pipeline-level progress bar
-    with tqdm(total=4, desc="Pipeline Progress", unit="step") as pbar:
-
-        # Load or generate embeddings
-        pbar.set_description("Loading or generating embeddings")  # set progress bar
-        embeddings, labels, original_indices, groups = load_or_generate_embeddings(
-            training_data_path, embeddings_save_path, generate_embeddings
-        )
-        pbar.update(1)
-
-        # Load the original data to use for splitting
-        pbar.set_description("Loading original data")  # set progress bar
-        df = load_data(training_data_path)
-        pbar.update(1)
-
-        # Split the data
-        pbar.set_description("Splitting data")  # set progress bar
-        X_train, X_test, y_train, y_test, train_idx, test_idx, test_original_indices = (
-            split_data(df, embeddings, labels, groups)
-        )
-        pbar.update(1)
-
-        # Convert to torch tensors
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        X_train = torch.tensor(X_train, dtype=torch.float32).to(device)
-        X_test = torch.tensor(X_test, dtype=torch.float32).to(device)
-        y_train = torch.tensor(y_train, dtype=torch.long).to(device)
-        y_test = torch.tensor(y_test, dtype=torch.long).to(device)
-
-        # Train the model using the train_model function from training_utils
-        pbar.set_description("Training the model")  # set progress bar
-        model_nn = SimpleNN(X_train.shape[1], [128, 64, 32, 16]).to(device)
-        criterion = CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model_nn.parameters(), lr=0.001)
-
-        train_model(
-            model_nn,
-            criterion,
-            optimizer,
-            X_train,
-            y_train,
-            X_test,
-            y_test,
-            num_epochs=20,
-            batch_size=128,
-            patience=3,
-            model_path=model_save_path,
-            test_data_path=test_data_path,
-            indices_path=indices_path,
-        )
-        pbar.update(1)
-
-        # Evaluate the model after training
-        logging.info("Evaluating the model...")
-        model_path, X_test, y_test, input_dim, test_original_indices, text_data = (
-            load_model_and_test_data(
-                os.path.dirname(model_save_path), training_data_path
-            )
-        )
-        predicted, report = evaluate_model(model_path, X_test, y_test, input_dim)
-        print(report)
-
-        # Print misclassified headers
-        print_misclassified_headers(y_test, predicted, test_original_indices, text_data)
+logger = logging.getLogger(__name__)
 
 
-def main():
-    """Main script to orchestrate the model training process"""
+def prepare_data():
+    """
+    Load or generate embeddings, load data, and split into training and testing sets.
 
-    # Set base directory path
-    base_dir = Path(r"C:\github\china stats yearbook RAG")
+    Returns:
+        tuple: X_train, X_test, y_train, y_test (torch tensors), input_dim, and device.
 
-    # Set training data path (need to update!)
-    training_data_path = (
-        base_dir / "data" / "training" / "training data 2024 Jul 31.xlsx"
+    """
+    #! Crucial Step: Set device to use GPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+
+    # Skip embedding generation if the embeddings file already exists
+
+    logger.info("Loading or generating embeddings...")
+    embeddings, labels, original_indices, groups = load_or_generate_embeddings(
+        data_file=TRAINING_DATA_FILE,
+        embeddings_file=TRAINING_EMBEDDINGS_PKL_FILE,
+        generate_embeddings_func=generate_embeddings,
     )
 
-    # Define all paths relative to the project directory
-    # Keep model output location constant
-    model_save_path = base_dir / "outputs" / "models" / "simple_nn_model.pth"
-    embeddings_save_path = base_dir / "outputs" / "models" / "embeddings.pkl"
-    test_data_path = base_dir / "outputs" / "models" / "test_data.pth"
-    indices_path = base_dir / "outputs" / "models" / "train_test_indices.pth"
+    logger.info("Loading training data...")
+    df = load_data(TRAINING_DATA_FILE)
 
-    build_training_pipeline(
-        training_data_path,
-        model_save_path,
-        embeddings_save_path,
-        test_data_path,
-        indices_path,
+    logger.info("Splitting data...")
+    X_train, X_test, y_train, y_test, _, _, _ = split_data(
+        df, embeddings, labels, groups
     )
+
+    X_train = torch.tensor(X_train, dtype=torch.float32).to(device)
+    X_test = torch.tensor(X_test, dtype=torch.float32).to(device)
+    y_train = torch.tensor(y_train, dtype=torch.long).to(device)
+    y_test = torch.tensor(y_test, dtype=torch.long).to(device)
+
+    input_dim = X_train.shape[1]
+
+    return X_train, X_test, y_train, y_test, input_dim, device
+
+
+def train_model_nn(X_train, y_train, X_test, y_test, input_dim, device):
+    """
+    Train the neural network model.
+
+    Args:
+        X_train (torch.Tensor): Training feature data.
+        y_train (torch.Tensor): Training labels.
+        X_test (torch.Tensor): Test feature data.
+        y_test (torch.Tensor): Test labels.
+        input_dim (int): Number of input features.
+        device (torch.device): Computation device (CPU or GPU).
+
+    Returns:
+        SimpleNN: Trained neural network model.
+    """
+    if MODEL_PTH_FILE.exists():
+        logger.info("Model already exists. Skipping training...")
+        return SimpleNN(input_dim).to(device)
+
+    # Training model
+    logger.info("Start training model...")
+
+    # Specifies the number of neurons (or units) for each hidden layer
+    hidden_dims = [128, 64, 32, 16]
+
+    # Ininitate the NN model
+    model_nn = SimpleNN(input_dim, hidden_dims).to(device)
+
+    class_counts = np.bincount(y_train.cpu().numpy())
+    class_weights = len(y_train) / (
+        len(np.unique(y_train.cpu().numpy())) * class_counts
+    )
+    class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+
+    criterion = CrossEntropyLoss(weight=class_weights)
+    optimizer = Adam(model_nn.parameters(), lr=0.001)
+    # Adam model stands for Adaptive Moment Estimation;
+    # it's the most popular go-to model for beginners and even experts,
+    # because it's fast and easy (adaptive learning rates, easy to setup, fast convergence...)
+
+    logger.info("Training the model...")
+    train_model(
+        model=model_nn,
+        criterion=criterion,
+        optimizer=optimizer,
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        num_epochs=20,
+        batch_size=128,
+        patience=3,
+        model_path=MODEL_PTH_FILE,
+        test_data_path=TEST_DATA_PTH_FILE,
+        indices_path=TRAIN_TEST_IDX_PTH_FILE,
+    )
+
+    return model_nn
+
+
+def evaluate_and_report():
+    """
+    Evaluate the trained model and print the classification report and misclassified samples.
+    Automatically runs training if the model or test data does not exist.
+    """
+    if not MODEL_PTH_FILE.exists() or not TEST_DATA_PTH_FILE.exists():
+        logger.warning("Model or test data missing. Running the training pipeline...")
+        run_training_pipeline()  # Automatically run training to create the missing files
+
+    logger.info("Evaluating the model...")
+
+    # Load data for evaluation
+    X_test, y_test, input_dim, test_original_indices, text_data = (
+        load_model_and_test_data(
+            model_file=MODEL_PTH_FILE,
+            test_data_file=TEST_DATA_PTH_FILE,
+            training_data_file=TRAINING_DATA_FILE,
+        )
+    )
+
+    # The model path is directly taken from project_config
+    model_file = MODEL_PTH_FILE
+
+    # Performe evaluation: Predict labels and log/print evaluation report
+    predicted, report = evaluate_model(model_file, X_test, y_test, input_dim)
+    logger.info(f"Evaluation Report:\n{report}")
+
+    logger.info("Save classification report...")
+    with open(EVALUATION_REPORT_FILE, "w") as f:
+        f.write("Classification Report:\n")
+        f.write(report)
+
+    logger.info("Printing misclassified headers...")
+    print_misclassified_headers(y_test, predicted, test_original_indices, text_data)
+
+
+def run_training_pipeline():
+    """
+    Orchestrate the entire training pipeline.
+    """
+    # Step 0: check if the pipeline should be skipped
+
+    # Collect all necessary files to check
+    required_files = {
+        "Model file": MODEL_PTH_FILE,
+        "Embeddings file": TRAINING_EMBEDDINGS_PKL_FILE,
+        "Test data file": TEST_DATA_PTH_FILE,
+        "Train/Test indices file": TRAIN_TEST_IDX_PTH_FILE,
+        "Evaluation report file": EVALUATION_REPORT_FILE,
+    }
+
+    # Check if all files exist
+    missing_files = [name for name, path in required_files.items() if not path.exists()]
+
+    if not missing_files:
+        logger.info("All necessary files exist. Skipping the entire training pipeline.")
+        return  # Early exit if everything exists
+
+    # Step 1. Start pipeline
+    start_time = time.time()  # Start timer
+    logger.info("Starting training pipeline...")
+
+    # Step 2. Prepare data
+    X_train, X_test, y_train, y_test, input_dim, device = prepare_data()
+
+    # Step 3. Train data
+    train_model_nn(X_train, y_train, X_test, y_test, input_dim, device)
+
+    # Step 3. Evaluate and Report
+    evaluate_and_report()
+
+    end_time = time.time()  # Record end time
+    elapsed_time_seconds = end_time - start_time
+    elapsed_time_hms = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_seconds))
+
+    logger.info(f"Training pipeline completed.")
+    logger.info(f"Pipeline completed in {elapsed_time_hms}.")
 
 
 if __name__ == "__main__":
-    main()
+    run_training_pipeline()
