@@ -19,9 +19,11 @@ filtered_files_2022 = get_filtered_files(
 print(f"2022 yearbook filtered_files: {len(filtered_files_2022)} files.")
 
 
-csv_file = Path(
-    r"C:\github\table_lense\input_output\preprocessing\preprocessed_data_2012.csv"
-)
-encoding, _ = detect_encoding(csv_file)
-df = pd.read_csv(csv_file, encoding=encoding)
-print(len(filtered_files_2012) - df["group"].nunique())
+# csv_file = Path(
+#     r"C:\github\table_lense\input_output\preprocessing\preprocessed_data_2012.csv"
+# )
+# encoding, _ = detect_encoding(csv_file)
+# df = pd.read_csv(csv_file, encoding=encoding)
+# print(len(filtered_files_2012) - df["group"].nunique())
+
+print(len(filtered_files_2012) + len(filtered_files_2022))

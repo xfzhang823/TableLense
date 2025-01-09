@@ -27,7 +27,7 @@ async def main():
     run_training_pipeline()
 
     # Run training pipeline()
-    run_inference_pipeline
+    run_inference_pipeline()
 
 
 if __name__ == "__main__":
