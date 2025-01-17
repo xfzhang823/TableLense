@@ -3,19 +3,10 @@
 # example_usagage (from modules)
 
 from config import (
-    raw_data_path,
-    production_data_path,
-    filtered_production_data,
-    training_data_path,
-    model_path,
-    embeddings_path,
-    embeddings_inference_path,
-    test_data_path,
-    indices_path,
-    raw_inference_output_data_path,
-    cleaned_inference_output_data_path,
-    combined_output_data_path,
-    dbs_path
+    PREPROCESSED_FILE,
+    TRAINING_FILE,
+    CLASSES,
+    ...
 )
 
 """
@@ -24,6 +15,11 @@ from config import (
 
 from pathlib import Path
 
+# Classes for labeling
+CLASSES = ["table_data", "title", "metadata", "header", "empty"]
+
+
+# *Data Input/Output paths
 # Raw data directories
 YEARBOOK_2012_DATA_DIR = Path(
     r"C:\Users\xzhan\Documents\China Related\China Year Books\China Year Book 2012\html"
@@ -98,8 +94,10 @@ TEST_DATA_PTH_FILE = NN_MODELS_DIR / "test_data.pth"  # model data for test data
 TRAIN_TEST_IDX_PTH_FILE = (
     NN_MODELS_DIR / "train_test_indices.pth"
 )  # index data for train/test data
-EVALUATION_REPORT_FILE = NN_MODELS_DIR / "evaluation_report.txt"
 
+EVALUATION_DIR = INPUT_OUTPUT_DIR / "evaluation"
+EVALUATION_REPORT_FILE = EVALUATION_DIR / "evaluation_report.txt"
+CONFUSION_MATRIX_FILE = EVALUATION_DIR / "confusion_matrix.html"
 
 # Inference Input/Outputs
 INFERENCE_DIR = INPUT_OUTPUT_DIR / "inference"

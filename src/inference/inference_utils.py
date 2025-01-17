@@ -12,7 +12,10 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from nn_models.simple_nn import SimpleNN
-from nn_models.training_utils import dynamic_batch_processing, process_batch
+from nn_models.training_utils import (
+    dynamic_batch_processing,
+    process_batch_for_embeddings,
+)
 
 # Check if CUDA is available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -87,7 +90,7 @@ def generate_embeddings(df, batch_size):
     logging.info("Generating embeddings...")
     results = dynamic_batch_processing(
         df,
-        process_batch,
+        process_batch_for_embeddings,
         batch_size=batch_size,
         is_inference=True,
     )

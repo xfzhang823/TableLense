@@ -25,6 +25,7 @@ import logging
 import pickle
 import os
 from typing import Callable, Tuple, Union
+from numpy.typing import NDArray
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
@@ -37,7 +38,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from utils.read_csv_file import read_csv_file
 from utils.read_exce_file import read_excel_file
 import logging_config
-
+from project_config import CLASSES
 
 # logger
 logger = logging.getLogger(__name__)
@@ -76,26 +77,33 @@ def load_data(file_path: Union[Path, str]) -> pd.DataFrame:
 
 
 # Function to split data into train, test, etc.
-def split_data(df, combined_embeddings, labels, groups, test_size=0.2, random_state=42):
+def split_data(
+    df: pd.DataFrame,
+    combined_embeddings: NDArray[np.float64],
+    labels: NDArray[np.int64],
+    groups: NDArray[np.int64],
+    test_size: float = 0.2,
+    random_state: int = 42,
+):
     """
-    Splits the data into training and testing sets while ensuring that samples from the same group
-    are not represented in both sets. The function uses GroupShuffleSplit to perform the split.
+    Splits the data into training and testing sets while ensuring that samples from
+    the same group are not represented in both sets. The function uses GroupShuffleSplit
+    to perform the split.
 
     Args:
         - df (pd.DataFrame): The DataFrame containing the original data.
         Must include a column "original_index".
-
-        - combined_embeddings (np.ndarray): The combined feature embeddings generated from the text data.
-
-        - labels (np.ndarray): The labels for the data, corresponding to the combined embeddings.
-
-        - groups (np.ndarray): The group labels for the data, ensuring that samples from the same group
-        are not split between training and testing sets.
-
-        - test_size (float, optional): The proportion of the data to include in the test split
+        - combined_embeddings (np.ndarray): The combined feature embeddings generated
+        from the text data.
+        - labels (np.ndarray): The labels for the data, corresponding to
+        the combined embeddings.
+        - groups (np.ndarray): The group labels for the data, ensuring that samples from
+        the same group are not split between training and testing sets.
+        - test_size (float, optional): The proportion of the data to include in
+        the test split
         (train/test split). Default is 0.2.
-
-        - random_state (int, optional): The seed used by the random number generator for reproducibility.
+        - random_state (int, optional): The seed used by the random number generator
+        for reproducibility.
         Default is 42.
 
     Returns:
@@ -138,8 +146,8 @@ def split_data(df, combined_embeddings, labels, groups, test_size=0.2, random_st
 
 
 # Function to process data for a single batch
-def process_batch(
-    batch_df, is_inference=False
+def process_batch_for_embeddings(
+    batch_df: pd.DataFrame, is_inference: bool = False
 ):  # inference should not have "label" column, but training needs to have it!
     """
     Process a batch of data to generate embeddings, extract labels, indices, and group labels.
@@ -153,6 +161,24 @@ def process_batch(
             - batch_labels (np.ndarray): Extracted labels for the batch.
             - batch_indices (np.ndarray): Original indices of the batch data.
             - batch_groups (np.ndarray): Group labels of the batch data.
+
+    Tokenization and Embedding Mechanism (BERT Specific):
+        *The BERT tokenizer processes input text into token IDs using WordPiece tokenization.
+
+        Special tokens added:
+        - '[CLS]': Serves as a placeholder for the entire sequence representation.
+        - '[SEP]': Marks the end of a sentence or separates two segments.
+        - The 'input_ids' are passed to the BERT model, which performs an embedding lookup
+        using a learned matrix.
+        - The embedding for each token combines token, position, and segment embeddings.
+        *- Unlike static embeddings (e.g., Word2Vec), BERT embeddings pass through multiple
+        *neural network layers, including self-attention and feed-forward layers,
+        *to create **contextualized representations** based on the full sentence.
+        - The '[CLS]' embedding (first token) can be used as a summary vector for
+        classification tasks.
+        - Alternatively, mean pooling can be applied across token embeddings to create
+        a sequence representation (#!faster but not as accurate).
+
     """
     # Check for required columns
     required_columns = [
@@ -180,15 +206,20 @@ def process_batch(
     text_data = batch_df["text"].tolist()
     inputs = tokenizer(
         text_data, return_tensors="pt", padding=True, truncation=True
-    ).to(device)
+    ).to(
+        device
+    )  # tensor here != tensor in NN (only means returned format is a vector - dictionary)
 
     # Generate embeddings in batches to avoid memory issues
     batch_size = 32  # This batch here is "small" batch; adjust based on GPU memory
     embeddings = []
 
     # Chunk into batches (resource management)
+    # The input tensor to BERT is a dictionary containing input_ids (tokenized text)
+    # and attention_mask.
     for i in range(0, len(inputs["input_ids"]), batch_size):
         batch_inputs = {k: v[i : i + batch_size].to(device) for k, v in inputs.items()}
+        #
         with torch.no_grad():
             outputs = model(**batch_inputs)
             batch_embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
@@ -209,11 +240,11 @@ def process_batch(
     # Add "is empty" feature (based on text content)
     # binary encoding: need to convert yes/no to 1/0
     empty_feature = batch_df["is_empty"].map({"yes": 1, "no": 0}).values
-    empty_feature = np.expand_dims(title_feature, axis=1)
+    empty_feature = np.expand_dims(empty_feature, axis=1)
 
     # Concatenate features
     batch_embeddings = np.concatenate(
-        [batch_embeddings, row_feature, title_feature], axis=1
+        [batch_embeddings, row_feature, title_feature, empty_feature], axis=1
     )
     # np.expand_dims method adds an extra dimension to row_feature:
     # if row_feature initially has the shape (N,) where N is the number of samples,
@@ -225,11 +256,8 @@ def process_batch(
     # If not in inference mode, extract labels
     # (convert label values from text to numeric values for training the model)
     if not is_inference:
-        batch_labels = (
-            batch_df["label"]
-            .map({"title": 1, "metadata": 2, "header": 3, "table_data": 0, "empty": 4})
-            .values
-        )
+        label_to_index = {label: idx for idx, label in enumerate(CLASSES)}
+        batch_labels = batch_df["label"].map(label_to_index).values
     else:
         batch_labels = None  # no labels required for inference
 
@@ -246,14 +274,17 @@ def dynamic_batch_processing(df, process_batch, batch_size=128, is_inference=Fal
     (each group is a discrete table, which has a max of 80 rows).
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the data to be processed.
-        process_batch (function): The function to process each batch.
+        - df (pd.DataFrame): The DataFrame containing the data to be processed.
+        - process_batch (function): The function to process each batch.
         (When you are passing a reference to the function, which can then be called within
         the other function)
-        batch_size (int, optional): The maximum size of each batch. Default to 128.
+        - batch_size (int, optional): Maximum external batch_size determines how many rows
+        (input texts) should be processed together (how many rows (text inputs) are grouped
+        together before calling process_batch.) Default to 128.
 
     Returns:
-        list: A list of tuples containing processed batch embeddings, labels, indices, and group labels.
+        list: A list of tuples containing processed batch embeddings, labels, indices,
+        and group labels.
     """
     grouped = df.groupby("group")  # Group the DataFrame by the 'group' column
     results = []
@@ -265,6 +296,7 @@ def dynamic_batch_processing(df, process_batch, batch_size=128, is_inference=Fal
 
     # Iterate over each group in the grouped DataFrame
     for group_name, group_data in tqdm(grouped, desc="Processing groups"):
+        logger.debug(f"Processing group: {group_name}")
         current_batch.append(group_data)  # Append the group data to the current batch
         current_batch_size += len(group_data)  # Update the current batch size
 
@@ -349,7 +381,7 @@ def generate_embeddings(
         raise ValueError(f"Missing required columns: {missing_columns}")
 
     # Process batches and generate embeddings
-    results = dynamic_batch_processing(df, process_batch)
+    results = dynamic_batch_processing(df, process_batch_for_embeddings)
 
     # Concatenate batch results into single arrays
     embeddings = np.concatenate([r[0] for r in results], axis=0)

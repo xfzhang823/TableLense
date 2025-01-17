@@ -25,7 +25,7 @@ Workflow:
     3. Append processed data to the preprocessed dataset.
     4. Repeat steps 1-3 until no missing files remain.
 
-Functions:
+Methods/Functions:
     - `get_missing_files`: Identifies files that haven't been processed yet.
     - `preprocess_missing_files`: Processes missing files asynchronously and saves the result.
     - `add_preprocessed_missing_data`: Appends newly processed data to the main 
@@ -160,8 +160,8 @@ async def preprocess_missing_files_async(
 
     Args:
         - source_data_dir (Path): Directory containing Excel files to check for missing files.
-        - processed_data_file (Path): Path to the CSV file that stores the aggregate preprocessed data.
-          Missing file content is appended to this file after processing.
+        - processed_data_file (Path): Path to the CSV file that stores the aggregate preprocessed
+        data.
         - yearbook_source (str): Identifier for the yearbook (e.g., "2012" or "2022").
         - filter_function (Callable[[str], bool]): A function to filter relevant files based on
         naming criteria.
@@ -172,8 +172,9 @@ async def preprocess_missing_files_async(
         None
 
     Usage:
-        Use as part of a pipeline to process and aggregate missing Excel data. The function identifies
-        missing files, processes them asynchronously, and appends their content to the preprocessed file.
+        Use as part of a pipeline to process and aggregate missing Excel data. The function
+        identifies the missing files, processes them asynchronously, and appends their content
+    to the preprocessed file.
 
     Example:
         await preprocess_missing_files_async(

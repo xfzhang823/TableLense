@@ -12,32 +12,38 @@ Steps:
 4. Identify and print misclassified 'header' samples.
 """
 
+# Standard libraries
 from pathlib import Path
 import os
 import sys
 import logging
-from typing import List, Tuple
+from typing import List, Optional, Tuple, Union
 import pandas as pd
 from pprint import pprint
 import torch
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 import torch.nn as nn
+import matplotlib.pyplot as plt
+import altair as alt
+
+# User defined libraries
 from nn_models.simple_nn import SimpleNN  # Use absolute import
 from utils.read_csv_file import read_csv_file
+import logging_config
+from project_config import CLASSES
+
 
 # Logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+logger = logging.getLogger("__main__")
 
 
-def load_model_and_test_data(
-    model_file: Path, test_data_file: Path, training_data_file: Path
+def load_test_data_and_text(
+    test_data_file: Path, training_data_file: Path
 ) -> Tuple[torch.Tensor, torch.Tensor, int, List[int], List[str]]:
     """
-    Load test data, model, and original data using paths from project_config.
+    Load test data and original data using paths from project_config.
 
     Args:
-        - model_path_file (Path): path to the model file (expect MODEL_PTH_FILE)
         - test_data_path_file (Path): path to the test data file
         (expect TEST_DATA_PTH_FILE)
         - original_data_file (Path): path to the training data file
@@ -45,7 +51,6 @@ def load_model_and_test_data(
 
     Returns:
         Tuple: Contains:
-            - model_path (Path): Path to the trained model file.
             - X_test (torch.Tensor): Test data features.
             - y_test (torch.Tensor): Test data labels.
             - input_dim (int): Number of input features.
@@ -72,7 +77,80 @@ def load_model_and_test_data(
     return X_test, y_test, input_dim, test_original_indices, text_data
 
 
-def evaluate_model(model_path, X_test, y_test, input_dim):
+def plot_confusion_matrix_altair(
+    cm: List[List[int]],
+    classes: List[str],
+    file_path: Optional[Union[Path, str]] = None,
+) -> Optional[alt.Chart]:
+    """
+    Plot the confusion matrix using Altair and optionally save it.
+
+    Args:
+        cm (List[List[int]]): Confusion matrix as a nested list.
+        classes (List[str]): Class names corresponding to labels.
+        file_path (Optional[Union[Path, str]]): File path to save the heatmap
+        (HTML, PNG, or SVG).
+            If None, the chart is only displayed.
+
+    Returns:
+        Optional[alt.Chart]: The Altair chart object for further use.
+
+    Raises:
+        ValueError: If the file_path format is unsupported.
+    """
+    try:
+        # Convert confusion matrix to DataFrame
+        cm_df = pd.DataFrame(cm, columns=classes, index=classes)
+        cm_df = cm_df.reset_index().melt(
+            id_vars="index", var_name="Predicted", value_name="Count"
+        )
+        cm_df.rename(columns={"index": "Actual"}, inplace=True)
+
+        # Create Altair heatmap
+        chart = (
+            alt.Chart(cm_df)
+            .mark_rect()
+            .encode(
+                x=alt.X("Predicted:N", title="Predicted Label"),
+                y=alt.Y("Actual:N", title="True Label"),
+                color=alt.Color("Count:Q", scale=alt.Scale(scheme="blues")),
+                tooltip=["Actual:N", "Predicted:N", "Count:Q"],
+            )
+            .properties(
+                title="Confusion Matrix",
+                width=600,  # Adjust the width (default is 400)
+                height=400,  # Adjust the height (default is 300)
+            )
+            .configure_title(fontSize=18)
+        )
+
+        # Display the chart
+        logger.info("Displaying the confusion matrix heatmap...")
+        chart.show()
+
+        # Save the chart if a file path is provided
+        if file_path:
+            file_path = Path(file_path)  # Ensure file_path is a Path object
+            if file_path.suffix in [".png", ".svg", ".html"]:
+                chart.save(file_path)
+                logger.info(f"Confusion matrix heatmap saved to {file_path}")
+            else:
+                raise ValueError("Unsupported file format. Use .html, .png, or .svg.")
+
+        # Return the chart object for further use
+        return chart
+
+    except Exception as e:
+        logger.error(f"Error while plotting confusion matrix: {e}")
+        raise
+
+
+def evaluate_model(
+    model_path: Union[Path, str],
+    X_test: torch.Tensor,
+    y_test: torch.Tensor,
+    input_dim: int,
+) -> Tuple[torch.Tensor, str, List[List[int]], List[str]]:
     """
     Evaluate the model.
 
@@ -83,28 +161,48 @@ def evaluate_model(model_path, X_test, y_test, input_dim):
         input_dim (int): Input dimension of the model.
 
     Returns:
-        tuple: Contains predicted labels and classification report.
+        Tuple[torch.Tensor, str, List[List[int]], List[str]]:
+            - Predicted labels as a tensor.
+            - Classification report as a string.
+            - Confusion matrix as a nested list.
+            - Class labels as a list of strings.
     """
-    hidden_dims = [128, 64, 32, 16]
-    model_nn = SimpleNN(input_dim, hidden_dims)
+    try:
+        # Load model
+        hidden_dims = [128, 64, 32, 16]
 
-    # Load the saved state dictionary into the model
-    model_nn.load_state_dict(torch.load(model_path))
+        # Instantiate model
+        model_nn = SimpleNN(input_dim, hidden_dims)
 
-    # Set the model to evaluation mode
-    model_nn.eval()
+        # Load the saved state dictionary into the model
+        model_nn.load_state_dict(torch.load(model_path))
 
-    # Evaluate the model
-    with torch.no_grad():
-        outputs = model_nn(X_test)
-        _, predicted = torch.max(outputs, 1)
-        report = classification_report(
-            y_test,
-            predicted,
-            target_names=["table_data", "title", "metadata", "header", "empty"],
-        )
+        # Set the model to evaluation mode
+        model_nn.eval()
 
-    return predicted, report
+        # Evaluate the model
+        with torch.no_grad():
+            outputs = model_nn(X_test)
+            _, predicted = torch.max(outputs, 1)
+            report = classification_report(
+                y_test,
+                predicted,
+                target_names=CLASSES,
+                #! labels preset in project_config file; the order must stay the same!
+            )
+        logger.info("Generated classification report.")
+
+        # Create confusion_matrix
+        cm = confusion_matrix(y_test.cpu().numpy(), predicted.cpu().numpy())
+        # need to remove tensors from gput to cpu
+        # need to covert to NumPy arrays.
+        logger.info("Generated confusion matrix.")
+
+        return predicted, report, cm.tolist(), CLASSES
+
+    except Exception as e:
+        logger.error(f"An error occured during model evaluation: {e}")
+        raise
 
 
 def print_misclassified_headers(y_test, predicted, test_original_indices, text_data):
@@ -124,8 +222,7 @@ def print_misclassified_headers(y_test, predicted, test_original_indices, text_d
     predicted_labels = predicted[misclassified_indices]
 
     print("\nMisclassified 'header' samples:")
-    for i in range(len(misclassified_samples)):
-        sample_index = misclassified_samples[i]
+    for i, sample_index in enumerate(misclassified_samples):
         misclassified_info = {
             "Sample Index": sample_index,
             "Text": text_data[sample_index],
@@ -138,35 +235,8 @@ def print_misclassified_headers(y_test, predicted, test_original_indices, text_d
 
 
 def main():
-    # Training data path
-    training_data_path = r"C:\github\china stats yearbook RAG\data\training\training data 2024 Jul 31 wo gap.xlsx"
-
-    # Set needed file paths for eval
-    model_dir_path = r"C:\github\china stats yearbook RAG\outputs\models"
-    original_data_path = training_data_path
-    model_path, X_test, y_test, input_dim, test_original_indices, text_data = (
-        load_model_and_test_data(model_dir_path, original_data_path)
-    )
-
-    # Evaluate the model
-    predicted, report = evaluate_model(model_path, X_test, y_test, input_dim)
-    print(report)
-
-    # Print misclassified headers
-    print_misclassified_headers(y_test, predicted, test_original_indices, text_data)
+    pass
 
 
 if __name__ == "__main__":
     main()
-
-
-# Optional: Add in the loop to correct and update mismatched results manually
-# # Manually verify if the predicted label is actually correct
-# is_correct = input("Is the predicted label correct? (yes/no): ").strip().lower()
-# if is_correct == "yes":
-#     # Update the original DataFrame with the correct label
-#     original_df.loc[sample_index, "label"] = "header"
-#     print(f"Corrected label for sample {sample_index}")
-
-# Save the corrected DataFrame back to the Excel file
-# original_df.to_excel(original_data_path, index=False)

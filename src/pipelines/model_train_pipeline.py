@@ -88,7 +88,9 @@ Training/Testing Process:
    - Implements early stopping to prevent overfitting and saves the best-performing model.
 """
 
-# Dependencies
+# Dependancies
+
+# Standard Python libraries
 from pathlib import Path
 import logging
 import time
@@ -98,6 +100,8 @@ from torch.optim import Adam
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+
+# User defined
 from nn_models.simple_nn import SimpleNN
 from nn_models.training_utils import (
     load_data,
@@ -108,8 +112,9 @@ from nn_models.training_utils import (
 )
 from nn_models.evaluate_model import (
     evaluate_model,
-    load_model_and_test_data,
+    load_test_data_and_text,
     print_misclassified_headers,
+    plot_confusion_matrix_altair,
 )
 from project_config import (
     TRAINING_DATA_FILE,
@@ -118,6 +123,7 @@ from project_config import (
     TEST_DATA_PTH_FILE,
     TRAIN_TEST_IDX_PTH_FILE,
     EVALUATION_REPORT_FILE,
+    CONFUSION_MATRIX_FILE,
 )
 
 logger = logging.getLogger(__name__)
@@ -227,7 +233,7 @@ def evaluate_and_report():
     Evaluate the trained model and print the classification report and misclassified samples.
     Automatically runs training if the model or test data does not exist.
     """
-    if not MODEL_PTH_FILE.exists() or not TEST_DATA_PTH_FILE.exists():
+    if not TEST_DATA_PTH_FILE.exists():
         logger.warning("Model or test data missing. Running the training pipeline...")
         run_training_pipeline()  # Automatically run training to create the missing files
 
@@ -235,8 +241,7 @@ def evaluate_and_report():
 
     # Load data for evaluation
     X_test, y_test, input_dim, test_original_indices, text_data = (
-        load_model_and_test_data(
-            model_file=MODEL_PTH_FILE,
+        load_test_data_and_text(
             test_data_file=TEST_DATA_PTH_FILE,
             training_data_file=TRAINING_DATA_FILE,
         )
@@ -246,7 +251,9 @@ def evaluate_and_report():
     model_file = MODEL_PTH_FILE
 
     # Performe evaluation: Predict labels and log/print evaluation report
-    predicted, report = evaluate_model(model_file, X_test, y_test, input_dim)
+    predicted, report, confusion_matrix, classes = evaluate_model(
+        model_file, X_test, y_test, input_dim
+    )
     logger.info(f"Evaluation Report:\n{report}")
 
     logger.info("Save classification report...")
@@ -256,6 +263,11 @@ def evaluate_and_report():
 
     logger.info("Printing misclassified headers...")
     print_misclassified_headers(y_test, predicted, test_original_indices, text_data)
+
+    logger.info("Plot and save confustion matrix...")
+    plot_confusion_matrix_altair(
+        cm=confusion_matrix, classes=classes, file_path=CONFUSION_MATRIX_FILE
+    )
 
 
 def run_training_pipeline():
@@ -271,6 +283,7 @@ def run_training_pipeline():
         "Test data file": TEST_DATA_PTH_FILE,
         "Train/Test indices file": TRAIN_TEST_IDX_PTH_FILE,
         "Evaluation report file": EVALUATION_REPORT_FILE,
+        "Confustion matrix file": CONFUSION_MATRIX_FILE,
     }
 
     # Check if all files exist

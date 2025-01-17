@@ -80,7 +80,7 @@ from tqdm import tqdm
 # Import custom classes/functions
 from nn_models.simple_nn import SimpleNN
 from nn_models.training_utils import (
-    process_batch,
+    process_batch_for_embeddings,
     dynamic_batch_processing,
     train_model,
     load_data,
@@ -97,7 +97,7 @@ def generate_embeddings(df):
     """
     Generate embeddings with dynamic_batching/process_batch functions from training_utils.py file
     """
-    results = dynamic_batch_processing(df, process_batch)
+    results = dynamic_batch_processing(df, process_batch_for_embeddings)
     embeddings = np.concatenate([r[0] for r in results], axis=0)
     labels = np.concatenate([r[1] for r in results], axis=0)
     original_indices = np.concatenate([r[2] for r in results], axis=0)

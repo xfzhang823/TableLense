@@ -6,7 +6,7 @@ from .evaluate_model import evaluate_model, classification_report
 from .training_utils import (
     generate_embeddings,
     dynamic_batch_processing,
-    process_batch,
+    process_batch_for_embeddings,
     train_model,
     load_data,
     load_or_generate_embeddings,
