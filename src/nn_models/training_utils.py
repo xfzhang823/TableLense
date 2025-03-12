@@ -368,7 +368,6 @@ def generate_embeddings(
         >>> embeddings, labels, original_indices, groups = generate_embeddings(df)
         >>> print(embeddings.shape)  # (num_rows, embedding_dim)
     """
-    logger = logging.getLogger(__name__)
 
     # Log the start of the process
     logger.info("Starting embedding generation...")

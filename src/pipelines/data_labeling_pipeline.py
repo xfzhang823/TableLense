@@ -2,6 +2,24 @@
 File: data_labeling_pipeline
 Author: Xiao-Fei Zhang
 Last Updated: 2025 Jan
+
+Description:
+    This module defines the data labeling pipeline for preparing training and inference datasets.
+    The pipeline reads preprocessed data and a section-group mapping file, merges them, and performs
+    several transformation steps to label and structure the data appropriately for downstream tasks.
+    The key steps include:
+        1. Validating file paths.
+        2. Reading the main preprocessed data and mapping files.
+        3. Merging the datasets using a VLOOKUP-like operation based on "group" and "yearbook_source".
+        4. Adding auxiliary columns such as 'is_empty', 'is_title', and 'original_index'.
+        5. Labeling rows based on the presence of title or empty text.
+        6. Re-arranging the DataFrame column order.
+        7. Saving the final labeled dataset to a CSV file.
+
+Usage:
+    To run the entire pipeline, call the function run_data_labeling_pipeline(), which
+    checks for the existence of the output file and, if absent, invokes the data_labeling_pipeline()
+    function to generate and save the labeled data.
 """
 
 # Dependencies
@@ -35,6 +53,38 @@ def data_labeling_pipeline(
     training_inference_data_file: Path,
     section_group_mapping_file: Path,
 ) -> None:
+    """
+    Execute the data labeling pipeline.
+
+    This function processes and labels the preprocessed dataset by:
+        1. Validating that the input files (preprocessed data and section mapping) exist.
+        2. Reading the main preprocessed CSV file using a custom CSV reader to
+        handle encoding issues.
+        3. Reading the section-group mapping Excel file and merging it with
+        the preprocessed data based on shared columns ("group" and "yearbook_source") to
+        add section information.
+        4. Adding an 'is_empty' column that flags rows with empty or missing text values.
+        5. Adding an 'is_title' column that flags the first row of each group as a title.
+        6. Creating an 'original_index' column to preserve the original DataFrame index,
+        which is useful during training and inference for mapping purposes.
+        7. Labeling each row:
+            - Default label: "unlabeled"
+            - Rows flagged as title are labeled "title"
+            - Rows flagged as empty are labeled "empty"
+        8. Re-arranging the DataFrame columns into a specified order for consistency.
+        9. Saving the final labeled DataFrame as a CSV file to the specified output path.
+
+    Args:
+        - preprocessed_data_file (Path): Path to the CSV file containing preprocessed data.
+        - training_inference_data_file (Path): Output path for the labeled training/inference
+        CSV file.
+        - section_group_mapping_file (Path): Path to the Excel file containing section-group
+        mapping information.
+
+    Raises:
+        FileNotFoundError: If either the preprocessed data file or the section mapping file
+        does not exist or is not a file.
+    """
     # Step 0. Validate file paths
     for file_path in [preprocessed_data_file, section_group_mapping_file]:
         path = Path(file_path) if isinstance(file_path, str) else file_path
@@ -114,7 +164,22 @@ def data_labeling_pipeline(
 
 
 def run_data_labeling_pipeline():
-    """Run pipeline"""
+    """
+    Run the data labeling pipeline if the labeled training/inference data file does not
+    already exist.
+
+    This function serves as an entry point for the data labeling process.
+    It performs the following steps:
+        1. Logs the start of the labeling pipeline.
+        2. Checks if the training/inference data file (output) already exists:
+            - If it exists, logs a message indicating that the pipeline is being skipped.
+            - If it does not exist, calls data_labeling_pipeline() with the appropriate
+            file paths obtained from the project configuration.
+        3. Logs the completion of the data labeling pipeline.
+
+    Returns:
+        None
+    """
     logger.info(f"Start labeling data pipeline.")
 
     # Check if the output file exists already: if so, skip

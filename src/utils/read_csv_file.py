@@ -1,11 +1,12 @@
-""" Function file to read a csv file into a dataframe w/o encoding issues """
+"""Function file to read a csv file into a dataframe w/o encoding issues"""
 
+from pathlib import Path
 import logging
 import pandas as pd
 from utils.file_encoding_detector import detect_encoding
 
 
-def read_csv_file(file_path):
+def read_csv_file(file_path: Path | str):
     """
     Read a CSV file into a DataFrame with detected encoding.
 

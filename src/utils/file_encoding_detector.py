@@ -8,10 +8,11 @@ Function file to detect file encoding.
 Dependency: chardet
 """
 
+from pathlib import Path
 import chardet
 
 
-def detect_encoding(file_path):
+def detect_encoding(file_path: Path | str):
     """
     Detects the encoding of a given file.
 
@@ -23,11 +24,11 @@ def detect_encoding(file_path):
     - confidence (float): The confidence level of the detected encoding.
     """
     with open(file_path, "rb") as file:
-        raw_data = file.read()
+        raw_data = file_path.read()
         result = chardet.detect(raw_data)
-        encoding = result["encoding"]
-        confidence = result["confidence"]
-        return encoding, confidence
+        file_encoding = result["encoding"]
+        encoding_confidence = result["confidence"]
+        return file_encoding, encoding_confidence
 
 
 if __name__ == "__main__":

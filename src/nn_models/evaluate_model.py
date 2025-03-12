@@ -25,6 +25,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import altair as alt
+from tabulate import tabulate
 
 # User defined libraries
 from nn_models.simple_nn import SimpleNN  # Use absolute import
@@ -99,6 +100,13 @@ def plot_confusion_matrix_altair(
         ValueError: If the file_path format is unsupported.
     """
     try:
+        # ---------------- NEW: Print raw confusion matrix ----------------
+        print("\nRaw Confusion Matrix:")
+        cm_df_raw = pd.DataFrame(cm, columns=classes, index=classes)
+        print(f"Classes: {classes}")
+        print(tabulate(cm_df_raw, headers="keys", tablefmt="psql", showindex=True))
+        # ----------------------------------------------------------------
+
         # Convert confusion matrix to DataFrame
         cm_df = pd.DataFrame(cm, columns=classes, index=classes)
         cm_df = cm_df.reset_index().melt(

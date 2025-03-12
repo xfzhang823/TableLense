@@ -1,4 +1,4 @@
-""" Data Input/Output dir/file configuration 
+"""Data Input/Output dir/file configuration
 
 # example_usagage (from modules)
 
@@ -101,12 +101,13 @@ CONFUSION_MATRIX_FILE = EVALUATION_DIR / "confusion_matrix.html"
 
 # Inference Input/Outputs
 INFERENCE_DIR = INPUT_OUTPUT_DIR / "inference"
-RAW_INFERENCE_OUTPUT_DATA_FILE = (
-    INFERENCE_DIR / "raw_inference_output.csv"
-)  # output of filtered production data; input of cleaned inference data
 INFERENCE_INPUT_DATA_FILE = (
     INFERENCE_DIR / "inference_input_data.csv"
 )  # preprocesssed and unlabeled data, excluding training data
+RAW_INFERENCE_OUTPUT_DATA_FILE = (
+    INFERENCE_DIR / "raw_inference_output.csv"
+)  # output of filtered production data; input of cleaned inference data
+
 CLEANED_INFERENCE_OUTPUT_DATA_FILE = INFERENCE_DIR / "cleaned_inference_outputs.csv"  #
 COMBINED_INFERENCE_OUTPUT_DATA_FILE = INFERENCE_DIR / "combined_labeled_data.csv"
 # inference data & training data (labeled) after data cleansing
