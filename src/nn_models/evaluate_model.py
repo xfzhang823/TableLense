@@ -69,7 +69,7 @@ def load_test_data_and_text(
     text_data = original_df["text"].tolist()
 
     # Load test data
-    test_data = torch.load(test_data_file)
+    test_data = torch.load(test_data_file, weights_only=False)
     X_test = torch.tensor(test_data["X_test"], dtype=torch.float32)
     y_test = torch.tensor(test_data["y_test"], dtype=torch.long)
     input_dim = test_data["input_dim"]

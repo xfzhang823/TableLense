@@ -4,9 +4,9 @@ Author: Xiao-Fei Zhang
 Date: last updated on 2024 Jul 31
 
 Description:
-    Defines a simple neural network (SimpleNN) with 4 hidden layers for text 
+    Defines a simple neural network (SimpleNN) with 4 hidden layers for text
     classification tasks.
-    
+
     The model uses dropout for regularization, ReLU activation, and L2 regularization
     to prevent overfitting. It is designed to be used with embeddings generated
     from BERT and additional features like row and title positional indicators.
@@ -129,7 +129,7 @@ class SimpleNN(nn.Module):
             torch.Tensor: The output logits (shape: [batch_size, num_classes]).
         """
         for layer in self.hidden_layers:
-            x = layer(x)
+            x = layer(x)  # Apply the linear transformation from the hidden layer
             x = self.relu(x)  # apply ReLu activation
             x = self.dropout(x)  # apply dropout
         x = self.output_layer(x)

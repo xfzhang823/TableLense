@@ -4,9 +4,9 @@ Author: Xiao-Fei Zhang
 Date: last updated on 2024 Dec
 
 Description:
-This script orchestrates the full pipeline for training, evaluating, and reporting results 
-for a neural network model on text data. The pipeline follows a modular approach by separating 
-data preparation, model training, and evaluation into distinct functions. 
+This script orchestrates the full pipeline for training, evaluating, and reporting results
+for a neural network model on text data. The pipeline follows a modular approach by separating
+data preparation, model training, and evaluation into distinct functions.
 
 This structure enhances readability, reusability, and maintainability.
 
@@ -16,70 +16,70 @@ Key techniques include:
 - Combined both text embedding and positional parameters (added row_id and other features)
 
 Key features and techniques include:
-- Compensating for data imbalance: Class weights are used to balance the impact of 
+- Compensating for data imbalance: Class weights are used to balance the impact of
 different classes.
 - Preventing overfitting: L2 regularization, dropout, and early stopping.
-- Combined both text embeddings and positional parameters 
+- Combined both text embeddings and positional parameters
 (such as row_id and other features).
 
 Module Structure:
-1. prepare_data: Handles embedding generation, data loading, and splitting into training 
+1. prepare_data: Handles embedding generation, data loading, and splitting into training
 and testing sets.
-2. train_model_nn: Manages the model training process, including defining the neural network 
+2. train_model_nn: Manages the model training process, including defining the neural network
 architecture and running the training loop.
-3. evaluate_and_report: Handles model evaluation, prints classification metrics, 
+3. evaluate_and_report: Handles model evaluation, prints classification metrics,
 and lists misclassified samples.
-4. run_training_pipeline: Orchestrates the entire process by calling the above functions 
+4. run_training_pipeline: Orchestrates the entire process by calling the above functions
 sequentially.
 
 Pipeline Outputs:
-- simple_nn_model.pth: 
-- embeddings.pkl: 
-- test_data.pth: 
-- train_test_indices.pth: 
+- simple_nn_model.pth:
+- embeddings.pkl:
+- test_data.pth:
+- train_test_indices.pth:
 
-- simple_nn_model.pth: Contains the state dictionary of the trained neural network model, 
-which includes weights and biases for all layers. It contains the state dictionary of 
-the trained neural network model. The state dictionary is a Python dictionary object that 
-maps each layer to its parameters (e.g., weights and biases). This file will be used to load 
+- simple_nn_model.pth: Contains the state dictionary of the trained neural network model,
+which includes weights and biases for all layers. It contains the state dictionary of
+the trained neural network model. The state dictionary is a Python dictionary object that
+maps each layer to its parameters (e.g., weights and biases). This file will be used to load
 the trained model's parameters for inference or further training later on.
 
-- embeddings.pkl: Stores generated embeddings, labels, original indices, and groups for 
-the dataset, saved as a serialized Python object. These embeddings are used as input features 
+- embeddings.pkl: Stores generated embeddings, labels, original indices, and groups for
+the dataset, saved as a serialized Python object. These embeddings are used as input features
 for model training.
 
-- test_data.pth: Contains the test dataset and metadata such as input dimension 
+- test_data.pth: Contains the test dataset and metadata such as input dimension
 and original indices for further analysis.
   * It includes:
   * X_test: The feature embeddings of the test set.
   * y_test: The labels of the test set.
   * input_dim: The dimension of the input features used to initialize the model.
-  * original_indices: The original indices of the test set from the initial dataset, 
+  * original_indices: The original indices of the test set from the initial dataset,
   *used to map the test data back to the original data for further analysis.
 
-- train_test_indices.pth: Stores the training and testing indices for reference and 
+- train_test_indices.pth: Stores the training and testing indices for reference and
 reproducibility.
 *It includes:
   * train_idx: The indices of the training set.
   * test_idx: The indices of the test set.
-  * original_indices: The original indices of the test set from the initial dataset, 
+  * original_indices: The original indices of the test set from the initial dataset,
   *used to map the test data back to the original data for further analysis.
 
 Training/Testing Process:
 1. Load or Generate Embeddings:
    - If embeddings exist, they are loaded from disk.
-   - If not, the script reads the data from an Excel file, tokenizes it, 
+   - If not, the script reads the data from an Excel file, tokenizes it,
    generates embeddings using a pre-trained BERT model, and saves the embeddings.
 
 2. Split the Data:
    - Combines text embeddings with additional features.
-   - Splits the data into training and testing sets using GroupShuffleSplit to ensure that 
+   - Splits the data into training and testing sets using GroupShuffleSplit to ensure that
    samples from the same group are not split across training and testing sets.
 
 3. Train the Model:
    - Defines the neural network architecture with dropout and L2 regularization.
    - Sets up the loss function with class weights to handle class imbalance.
-   - Performs forward and backward passes, computes the loss (including L2 regularization), 
+   - Performs forward and backward passes, computes the loss (including L2 regularization),
    and updates model parameters.
 
 4. Evaluate and Save the Model:
@@ -136,6 +136,20 @@ def prepare_data():
     Returns:
         tuple: X_train, X_test, y_train, y_test (torch tensors), input_dim, and device.
 
+    The primary task is managing the embedding process, which is the most computational
+    intensive.
+
+    * Workflow of the embedding process:
+    [train_model.py pipeline]
+        └─> prepare_data(...)
+            └─> load_or_generate_embeddings(
+                    data_file=...,
+                    embeddings_file=...,
+                    generate_embeddings_func=generate_embeddings
+                )
+                    └─> if not cached -> generate_embeddings(...)
+                        └─> dynamic_batch_processing(...)
+                                └─> process_batch_for_embeddings(...)
     """
     #! Crucial Step: Set device to use GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -235,7 +249,7 @@ def evaluate_and_report():
     """
     if not TEST_DATA_PTH_FILE.exists():
         logger.warning("Model or test data missing. Running the training pipeline...")
-        run_training_pipeline()  # Automatically run training to create the missing files
+        run_model_training_pipeline()  # Automatically run training to create the missing files
 
     logger.info("Evaluating the model...")
 
@@ -270,7 +284,7 @@ def evaluate_and_report():
     )
 
 
-def run_training_pipeline():
+def run_model_training_pipeline():
     """
     Orchestrate the entire training pipeline.
     """
@@ -286,7 +300,7 @@ def run_training_pipeline():
         "Confustion matrix file": CONFUSION_MATRIX_FILE,
     }
 
-    # Check if all files exist
+    # * Check to initiate or skip pipeline: if all files exist or not
     missing_files = [name for name, path in required_files.items() if not path.exists()]
 
     if not missing_files:
@@ -315,4 +329,4 @@ def run_training_pipeline():
 
 
 if __name__ == "__main__":
-    run_training_pipeline()
+    run_model_training_pipeline()

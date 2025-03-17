@@ -4,12 +4,12 @@ Author: Xiao-Fei Zhang
 Date: last updated on 2024 Dec
 
 Description:
-    - Utility class for preprocessing Excel files. 
-    - It includes functions to clear sheets, copy content between sheets, 
+    - Utility class for preprocessing Excel files.
+    - It includes functions to clear sheets, copy content between sheets,
     process Excel files, convert cell references, etc.
     - This version includes both synchronous and asynchronous methods.
 
-    This version uses asyncio.Semaphore to manage resources; 
+    This version uses asyncio.Semaphore to manage resources;
     it does not use threading.Lock.
 
 Usage:
@@ -271,41 +271,6 @@ class ExcelPreprocessor:
             f"Data area determined: min_row={min_row}, max_row={max_row}, min_col={min_col}, max_col={max_col}"
         )
         return min_row, max_row, min_col, max_col
-
-    # Todo: older version - to be deleted after debugging
-    # def find_data_area_old_version(self, sheet):
-    #     """Find the row/col of the area with data."""
-    #     logger.info("Finding data area")
-    #     max_row, max_col = 0, 0
-
-    #     for row in range(1, sheet.used_range.last_cell.row + 1):
-    #         for col in range(1, sheet.used_range.last_cell.column + 1):
-    #             cell_value = sheet.range((row, col)).value
-    #             if cell_value not in [None, "", " "]:
-    #                 max_row, max_col = max(max_row, row), max(max_col, col)
-
-    #     min_row = next(
-    #         row
-    #         for row in range(1, max_row + 1)
-    #         if any(
-    #             sheet.range((row, col)).value not in [None, "", " "]
-    #             for col in range(1, max_col + 1)
-    #         )
-    #     )
-
-    #     min_col = next(
-    #         col
-    #         for col in range(1, max_col + 1)
-    #         if any(
-    #             sheet.range((row, col)).value not in [None, "", " "]
-    #             for row in range(1, max_row + 1)
-    #         )
-    #     )
-
-    #     logger.info(
-    #         f"Data area determined: min_row={min_row}, max_row={max_row}, min_col={min_col}, max_col={max_col}"
-    #     )
-    #     return min_row, max_row, min_col, max_col
 
     def find_table_area(self, sheet):
         """Find the row/col of the table area."""

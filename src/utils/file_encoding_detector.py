@@ -24,7 +24,7 @@ def detect_encoding(file_path: Path | str):
     - confidence (float): The confidence level of the detected encoding.
     """
     with open(file_path, "rb") as file:
-        raw_data = file_path.read()
+        raw_data = file.read()
         result = chardet.detect(raw_data)
         file_encoding = result["encoding"]
         encoding_confidence = result["confidence"]

@@ -4,12 +4,12 @@ Author: Xiao-Fei Zhang
 Date: last updated on 2024 Jul 28
 
 Description:
-    - Utility class for preprocessing Excel files. 
-    - It includes functions to clear sheets, copy content between sheets, 
+    - Utility class for preprocessing Excel files.
+    - It includes functions to clear sheets, copy content between sheets,
     process Excel files, convert cell references, etc.
     - This version includes both synchronous and asynchronous methods.
 
-    This version uses asyncio.Semaphore to manage resources; 
+    This version uses asyncio.Semaphore to manage resources;
     it does not use threading.Lock.
 
 Usage:
@@ -19,7 +19,7 @@ Dependencies: xlwings, pandas, os, logger, sys, asyncio, tempfile, shutil
 """
 
 from pathlib import Path
-import os
+import re
 import logging
 import sys
 from typing import Callable, Union
@@ -86,17 +86,14 @@ def append_tabular_data_files(
         )
 
 
-def is_all_empty(row):
+def is_all_empty(row) -> bool:
     """
-    Check if all items in a row are 'EMPTY', ignoring extra spaces.
-
-    Args:
-        row (str): A string representing a row, with items separated by commas.
-
-    Returns:
-        bool: True if all items are 'EMPTY' (after stripping spaces), False otherwise.
+    Check if all items in a row are "EMPTY" (case-insensitive) or empty strings.
     """
-    items = [item.strip().upper() for item in row.split(",")]
+    if isinstance(row, str):
+        items = [item.strip().upper() for item in row.split(",")]
+    else:
+        items = [str(item).strip().upper() for item in row]
     return all(item == "EMPTY" or item == "" for item in items)
 
 
@@ -159,7 +156,7 @@ def add_is_title_column(df):
     return df
 
 
-def clean_text(value):
+def clean_text(value: str) -> str:
     """
     Clean a single value by removing non-printable characters, excessive spaces,
     and stripping special characters that may break training.

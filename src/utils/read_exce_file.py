@@ -1,8 +1,8 @@
-""" Function file to read a csv file into a dataframe w/o encoding issues """
+"""Function file to read a csv file into a dataframe w/o encoding issues"""
 
 import logging
 import pandas as pd
-from file_encoding_detector import detect_encoding
+from utils.file_encoding_detector import detect_encoding
 
 
 def read_excel_file(file_path, sheet_name=0):
