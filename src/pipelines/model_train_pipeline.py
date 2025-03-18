@@ -107,7 +107,7 @@ from nn_models.training_utils import (
     load_data,
     load_or_generate_embeddings,
     split_data,
-    train_model,
+    train_model_core,
     generate_embeddings,
 )
 from nn_models.evaluate_model import (
@@ -116,6 +116,7 @@ from nn_models.evaluate_model import (
     print_misclassified_headers,
     plot_confusion_matrix_altair,
 )
+from utils.log_timer import log_timer
 from project_config import (
     TRAINING_DATA_FILE,
     MODEL_PTH_FILE,
@@ -182,7 +183,7 @@ def prepare_data():
     return X_train, X_test, y_train, y_test, input_dim, device
 
 
-def train_model_nn(X_train, y_train, X_test, y_test, input_dim, device):
+def run_training_process(X_train, y_train, X_test, y_test, input_dim, device):
     """
     Train the neural network model.
 
@@ -197,19 +198,23 @@ def train_model_nn(X_train, y_train, X_test, y_test, input_dim, device):
     Returns:
         SimpleNN: Trained neural network model.
     """
-    if MODEL_PTH_FILE.exists():
-        logger.info("Model already exists. Skipping training...")
-        return SimpleNN(input_dim).to(device)
+    # * Check if the test data file exists. We treat this as an indicator that
+    # * the training process has been completed (i.e., the model checkpoint and
+    # * indices file were generated).
+    if TEST_DATA_PTH_FILE.exists():
+        logger.info("Test data pth file already exists. Skip training.")
+        return  # Early return
 
     # Training model
     logger.info("Start training model...")
 
-    # Specifies the number of neurons (or units) for each hidden layer
+    # Ininitate the NN model
     hidden_dims = [128, 64, 32, 16]
 
-    # Ininitate the NN model
+    # Create simple NN
     model_nn = SimpleNN(input_dim, hidden_dims).to(device)
 
+    # Specifies the number of neurons (or units) for each hidden layer
     class_counts = np.bincount(y_train.cpu().numpy())
     class_weights = len(y_train) / (
         len(np.unique(y_train.cpu().numpy())) * class_counts
@@ -223,7 +228,7 @@ def train_model_nn(X_train, y_train, X_test, y_test, input_dim, device):
     # because it's fast and easy (adaptive learning rates, easy to setup, fast convergence...)
 
     logger.info("Training the model...")
-    train_model(
+    train_model_core(
         model=model_nn,
         criterion=criterion,
         optimizer=optimizer,
@@ -299,7 +304,6 @@ def run_model_training_pipeline():
         "Evaluation report file": EVALUATION_REPORT_FILE,
         "Confustion matrix file": CONFUSION_MATRIX_FILE,
     }
-
     # * Check to initiate or skip pipeline: if all files exist or not
     missing_files = [name for name, path in required_files.items() if not path.exists()]
 
@@ -307,25 +311,27 @@ def run_model_training_pipeline():
         logger.info("All necessary files exist. Skipping the entire training pipeline.")
         return  # Early exit if everything exists
 
-    # Step 1. Start pipeline
-    start_time = time.time()  # Start timer
+    # Step 1: Start pipeline timer
+    overall_start = time.time()
     logger.info("Starting training pipeline...")
 
     # Step 2. Prepare data
-    X_train, X_test, y_train, y_test, input_dim, device = prepare_data()
+    with log_timer("Data preparation"):
+        X_train, X_test, y_train, y_test, input_dim, device = prepare_data()
 
     # Step 3. Train data
-    train_model_nn(X_train, y_train, X_test, y_test, input_dim, device)
+    with log_timer("Training process"):
+        run_training_process(X_train, y_train, X_test, y_test, input_dim, device)
 
-    # Step 3. Evaluate and Report
+    # Step 4. Evaluate and Report
     evaluate_and_report()
 
-    end_time = time.time()  # Record end time
-    elapsed_time_seconds = end_time - start_time
-    elapsed_time_hms = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_seconds))
+    overall_elapsed = time.strftime(
+        "%H:%M:%S", time.gmtime(time.time() - overall_start)
+    )
 
     logger.info(f"Training pipeline completed.")
-    logger.info(f"Pipeline completed in {elapsed_time_hms}.")
+    logger.info(f"Pipeline completed in {overall_elapsed}.")
 
 
 if __name__ == "__main__":

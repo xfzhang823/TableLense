@@ -1,0 +1,112 @@
+text,yearbook_source,section,group,row_id,is_empty,is_title,original_index,actual_label,predicted_label,label,label_type
+"4-17 Registered Unemployed Persons and Unemployment Rate in Urban Area by Region, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,1,no,yes,4018,title,title,title,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,2,yes,no,4019,empty,empty,empty,actual
+"Region, EMPTY, Unemployed Persons 10 000 persons, EMPTY, EMPTY, EMPTY, Unemployment Rate %, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,3,no,no,4020,unlabeled,header,header,predicted
+"EMPTY, EMPTY, 1990.0, 2005.0, 2010.0, 2011.0, 1990.0, 2005.0, 2010.0, 2011.0",2012,Employments and Wages,E0417e,4,no,no,4021,unlabeled,header,header,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,5,yes,no,4022,empty,empty,empty,actual
+"EMPTY, National Total, 383.2, 839.0, 908.0, 922.0, 2.5, 4.2, 4.1, 4.1",2012,Employments and Wages,E0417e,6,no,no,4023,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,7,yes,no,4024,empty,empty,empty,actual
+"EMPTY, Beijing , 1.7, 10.56, 7.7255, 8.1336, 0.4, 2.11, 1.37, 1.39",2012,Employments and Wages,E0417e,8,no,no,4025,unlabeled,table_data,table_data,predicted
+"EMPTY, Tianjin , 8.1, 11.71, 16.0983, 20.1098, 2.7, 3.7, 3.6, 3.6",2012,Employments and Wages,E0417e,9,no,no,4026,unlabeled,table_data,table_data,predicted
+"EMPTY, Hebei , 7.7, 27.82, 35.1365, 35.9857, 1.1, 3.93, 3.86, 3.75",2012,Employments and Wages,E0417e,10,no,no,4027,unlabeled,table_data,table_data,predicted
+"EMPTY, Shanxi , 5.5, 14.27, 20.3868, 21.1493, 1.2, 3.01, 3.58, 3.48",2012,Employments and Wages,E0417e,11,no,no,4028,unlabeled,table_data,table_data,predicted
+"EMPTY, Inner Mongolia, 15.2, 17.74, 20.811, 21.8289, 3.8, 4.26, 3.9, 3.8",2012,Employments and Wages,E0417e,12,no,no,4029,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,13,yes,no,4030,empty,empty,empty,actual
+"EMPTY, Liaoning , 23.7, 60.4, 38.9317, 39.4319, 2.2, 5.62, 3.63, 3.68",2012,Employments and Wages,E0417e,14,no,no,4031,unlabeled,table_data,table_data,predicted
+"EMPTY, Jilin , 10.5, 27.64, 22.65, 22.2121, 1.9, 4.2, 3.8, 3.7",2012,Employments and Wages,E0417e,15,no,no,4032,unlabeled,table_data,table_data,predicted
+"EMPTY, Heilongjiang , 20.4, 31.3, 36.2397, 35.0299, 2.2, 4.42, 4.27, 4.1",2012,Employments and Wages,E0417e,16,no,no,4033,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,17,yes,no,4034,empty,empty,empty,actual
+"EMPTY, Shanghai , 7.7, 27.5, 27.7301, 27.0045, 1.5, EMPTY, 4.35, 3.54",2012,Employments and Wages,E0417e,18,no,no,4035,unlabeled,table_data,table_data,predicted
+"EMPTY, Jiangsu , 22.5, 41.62, 40.6482, 41.4484, 2.4, 3.56, 3.16, 3.22",2012,Employments and Wages,E0417e,19,no,no,4036,unlabeled,table_data,table_data,predicted
+"EMPTY, Zhejiang , 11.2, 28.97, 31.1342, 31.673, 2.2, 3.72, 3.2, 3.12",2012,Employments and Wages,E0417e,20,no,no,4037,unlabeled,table_data,table_data,predicted
+"EMPTY, Anhui , 15.2, 27.77, 26.8631, 33.1367, 2.8, 4.4, 3.66, 3.74",2012,Employments and Wages,E0417e,21,no,no,4038,unlabeled,table_data,table_data,predicted
+"EMPTY, Fujian , 9.0, 14.86, 14.4929, 14.6361, 2.6, 3.95, 3.77, 3.69",2012,Employments and Wages,E0417e,22,no,no,4039,unlabeled,table_data,table_data,predicted
+"EMPTY, Jiangxi , 10.3, 22.83, 26.2577, 24.6416, 2.4, 3.48, 3.31, 2.98",2012,Employments and Wages,E0417e,23,no,no,4040,unlabeled,table_data,table_data,predicted
+"EMPTY, Shandong , 26.2, 42.9, 59.5139, 45.0, 3.2, 3.33, 3.36, 3.35",2012,Employments and Wages,E0417e,24,no,no,4041,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,25,yes,no,4042,empty,empty,empty,actual
+"EMPTY, Henan , 25.1, 33.02, 38.1571, 38.4073, 3.3, 3.45, 3.38, 3.35",2012,Employments and Wages,E0417e,26,no,no,4043,unlabeled,table_data,table_data,predicted
+"EMPTY, Hubei , 12.7, 52.64, 55.6542, 55.1156, 1.7, 4.33, 4.18, 4.1",2012,Employments and Wages,E0417e,27,no,no,4044,unlabeled,table_data,table_data,predicted
+"EMPTY, Hunan , 15.9, 41.86, 43.2172, 43.1448, 2.7, 4.27, 4.16, 4.21",2012,Employments and Wages,E0417e,28,no,no,4045,unlabeled,table_data,table_data,predicted
+"EMPTY, Guangdong , 19.2, 34.49, 39.3029, 38.8345, 2.2, 2.58, 2.52, 2.46",2012,Employments and Wages,E0417e,29,no,no,4046,unlabeled,table_data,table_data,predicted
+"EMPTY, Guangxi , 13.9, 18.5, 19.0707, 18.8133, 3.9, 4.15, 3.66, 3.46",2012,Employments and Wages,E0417e,30,no,no,4047,unlabeled,table_data,table_data,predicted
+"EMPTY, Hainan , 3.5, 5.08, 4.7738, 2.8547, 3.0, 3.55, 3.0, 1.73",2012,Employments and Wages,E0417e,31,no,no,4048,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,32,yes,no,4049,empty,empty,empty,actual
+"EMPTY, Chongqing , EMPTY, 16.88, 13.0166, 12.9565, EMPTY, 4.12, 3.9, 3.5",2012,Employments and Wages,E0417e,33,no,no,4050,unlabeled,table_data,table_data,predicted
+"EMPTY, Sichuan , 38.0, 34.3, 34.555, 36.931, 3.7, 4.61, 4.14, 4.16",2012,Employments and Wages,E0417e,34,no,no,4051,unlabeled,table_data,table_data,predicted
+"EMPTY, Guizhou , 10.7, 12.13, 12.1798, 12.5091, 4.1, 4.2, 3.64, 3.63",2012,Employments and Wages,E0417e,35,no,no,4052,unlabeled,table_data,table_data,predicted
+"EMPTY, Yunnan , 7.8, 12.97, 15.6899, 15.994, 2.5, 4.17, 4.21, 4.05",2012,Employments and Wages,E0417e,36,no,no,4053,unlabeled,table_data,table_data,predicted
+"EMPTY, Tibet , EMPTY, EMPTY, 2.0789, 1.0403, EMPTY, EMPTY, 3.99, 3.2",2012,Employments and Wages,E0417e,37,no,no,4054,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,38,yes,no,4055,empty,empty,empty,actual
+"EMPTY, Shaanxi , 11.2, 21.54, 21.4206, 20.9061, 2.8, 4.18, 3.85, 3.59",2012,Employments and Wages,E0417e,39,no,no,4056,unlabeled,table_data,table_data,predicted
+"EMPTY, Gansu , 12.5, 9.25, 10.7224, 10.7769, 4.9, 3.26, 3.21, 3.11",2012,Employments and Wages,E0417e,40,no,no,4057,unlabeled,table_data,table_data,predicted
+"EMPTY, Qinghai , 4.2, 3.63, 4.2424, 4.3538, 5.6, 3.93, 3.8, 3.76",2012,Employments and Wages,E0417e,41,no,no,4058,unlabeled,table_data,table_data,predicted
+"EMPTY, Ningxia , 4.0, 4.35, 4.7551, 5.2223, 5.4, 4.52, 4.35, 4.35",2012,Employments and Wages,E0417e,42,no,no,4059,unlabeled,table_data,table_data,predicted
+"EMPTY, Xinjiang , 9.6, 11.13, 10.9874, 11.1183, 3.0, 3.92, 3.23, 3.22",2012,Employments and Wages,E0417e,43,no,no,4060,unlabeled,table_data,table_data,predicted
+"19-7 Gold and Foreign Exchange Reserves, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,1,no,yes,2863,title,,title,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,2,yes,no,2864,empty,,empty,actual
+"Year, Gold Reserves, Foreign Exchange, Year, Gold Reserves, Foreign Exchange",2012,Financial Intermediation,T1907e,3,no,no,2865,header,,header,actual
+"EMPTY, 10 000 oz., Reserves, EMPTY, 10 000 oz., Reserves",2012,Financial Intermediation,T1907e,4,no,no,2866,header,,header,actual
+"EMPTY, EMPTY, USD 100 million, EMPTY, EMPTY, USD 100 million",2012,Financial Intermediation,T1907e,5,no,no,2867,header,,header,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,6,yes,no,2868,empty,,empty,actual
+"1978.0, 1280.0, 1.67, 1995.0, 1267.0, 735.97",2012,Financial Intermediation,T1907e,7,no,no,2869,table_data,,table_data,actual
+"1979.0, 1280.0, 8.4, 1996.0, 1267.0, 1050.29",2012,Financial Intermediation,T1907e,8,no,no,2870,table_data,,table_data,actual
+"1980.0, 1280.0, -12.96, 1997.0, 1267.0, 1398.9",2012,Financial Intermediation,T1907e,9,no,no,2871,table_data,,table_data,actual
+"1981.0, 1267.0, 27.08, 1998.0, 1267.0, 1449.59",2012,Financial Intermediation,T1907e,10,no,no,2872,table_data,,table_data,actual
+"1982.0, 1267.0, 69.86, 1999.0, 1267.0, 1546.75",2012,Financial Intermediation,T1907e,11,no,no,2873,table_data,,table_data,actual
+"1983.0, 1267.0, 89.01, 2000.0, 1267.0, 1655.74",2012,Financial Intermediation,T1907e,12,no,no,2874,table_data,,table_data,actual
+"1984.0, 1267.0, 82.2, 2001.0, 1608.0, 2121.65",2012,Financial Intermediation,T1907e,13,no,no,2875,table_data,,table_data,actual
+"1985.0, 1267.0, 26.44, 2002.0, 1929.0, 2864.07",2012,Financial Intermediation,T1907e,14,no,no,2876,table_data,,table_data,actual
+"1986.0, 1267.0, 20.72, 2003.0, 1929.0, 4032.51",2012,Financial Intermediation,T1907e,15,no,no,2877,table_data,,table_data,actual
+"1987.0, 1267.0, 29.23, 2004.0, 1929.0, 6099.32",2012,Financial Intermediation,T1907e,16,no,no,2878,table_data,,table_data,actual
+"1988.0, 1267.0, 33.72, 2005.0, 1929.0, 8188.72",2012,Financial Intermediation,T1907e,17,no,no,2879,table_data,,table_data,actual
+"1989.0, 1267.0, 55.5, 2006.0, 1929.0, 10663.4",2012,Financial Intermediation,T1907e,18,no,no,2880,table_data,,table_data,actual
+"1990.0, 1267.0, 110.93, 2007.0, 1929.0, 15282.49",2012,Financial Intermediation,T1907e,19,no,no,2881,table_data,,table_data,actual
+"1991.0, 1267.0, 217.12, 2008.0, 1929.0, 19460.3",2012,Financial Intermediation,T1907e,20,no,no,2882,table_data,,table_data,actual
+"1992.0, 1267.0, 194.43, 2009, 3389.0, 23991.52",2012,Financial Intermediation,T1907e,21,no,no,2883,table_data,,table_data,actual
+"1993.0, 1267.0, 211.99, 2010, 3389.0, 28473.38",2012,Financial Intermediation,T1907e,22,no,no,2884,table_data,,table_data,actual
+"1994.0, 1267.0, 516.2, 2011, 3389.0, 31811.48",2012,Financial Intermediation,T1907e,23,no,no,2885,table_data,,table_data,actual
+"2-5 Population at Year-end by Region, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,1,no,yes,5856,title,,title,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,2,yes,no,5857,empty,,empty,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, 10 000 persons",2022,Population,E02-05,3,no,no,5858,metadata,,metadata,actual
+"Region, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0, 2021.0",2022,Population,E02-05,4,no,no,5859,header,,header,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,5,yes,no,5860,empty,,empty,actual
+"National Total, 135922.0, 136726.0, 137646.0, 138326.0, 139232.0, 140011.0, 140541.0, 141008.0, 141212.0, 141260.0",2022,Population,E02-05,6,no,no,5861,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,7,yes,no,5862,empty,,empty,actual
+"Beijing, 2078.0, 2125.0, 2171.0, 2188.0, 2195.0, 2194.0, 2192.0, 2190.0, 2189.0, 2189.0",2022,Population,E02-05,8,no,no,5863,table_data,,table_data,actual
+"Tianjin, 1378.0, 1410.0, 1429.0, 1439.0, 1443.0, 1410.0, 1383.0, 1385.0, 1387.0, 1373.0",2022,Population,E02-05,9,no,no,5864,table_data,,table_data,actual
+"Hebei, 7262.0, 7288.0, 7323.0, 7345.0, 7375.0, 7409.0, 7426.0, 7447.0, 7464.0, 7448.0",2022,Population,E02-05,10,no,no,5865,table_data,,table_data,actual
+"Shanxi, 3548.0, 3535.0, 3528.0, 3519.0, 3514.0, 3510.0, 3502.0, 3497.0, 3490.0, 3480.0",2022,Population,E02-05,11,no,no,5866,table_data,,table_data,actual
+"Inner Mongolia, 2464.0, 2455.0, 2449.0, 2440.0, 2436.0, 2433.0, 2422.0, 2415.0, 2403.0, 2400.0",2022,Population,E02-05,12,no,no,5867,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,13,yes,no,5868,empty,,empty,actual
+"Liaoning, 4375.0, 4365.0, 4358.0, 4338.0, 4327.0, 4312.0, 4291.0, 4277.0, 4255.0, 4229.0",2022,Population,E02-05,14,no,no,5869,table_data,,table_data,actual
+"Jilin, 2698.0, 2668.0, 2642.0, 2613.0, 2567.0, 2526.0, 2484.0, 2448.0, 2399.0, 2375.0",2022,Population,E02-05,15,no,no,5870,table_data,,table_data,actual
+"Heilongjiang, 3724.0, 3666.0, 3608.0, 3529.0, 3463.0, 3399.0, 3327.0, 3255.0, 3171.0, 3125.0",2022,Population,E02-05,16,no,no,5871,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,17,yes,no,5872,empty,,empty,actual
+"Shanghai, 2399.0, 2448.0, 2467.0, 2458.0, 2467.0, 2466.0, 2475.0, 2481.0, 2488.0, 2489.0",2022,Population,E02-05,18,no,no,5873,table_data,,table_data,actual
+"Jiangsu, 8120.0, 8192.0, 8281.0, 8315.0, 8381.0, 8423.0, 8446.0, 8469.0, 8477.0, 8505.0",2022,Population,E02-05,19,no,no,5874,table_data,,table_data,actual
+"Zhejiang, 5685.0, 5784.0, 5890.0, 5985.0, 6072.0, 6170.0, 6273.0, 6375.0, 6468.0, 6540.0",2022,Population,E02-05,20,no,no,5875,table_data,,table_data,actual
+"Anhui, 5978.0, 5988.0, 5997.0, 6011.0, 6033.0, 6057.0, 6076.0, 6092.0, 6105.0, 6113.0",2022,Population,E02-05,21,no,no,5876,table_data,,table_data,actual
+"Fujian, 3841.0, 3885.0, 3945.0, 3984.0, 4016.0, 4065.0, 4104.0, 4137.0, 4161.0, 4187.0",2022,Population,E02-05,22,no,no,5877,table_data,,table_data,actual
+"Jiangxi, 4475.0, 4476.0, 4480.0, 4485.0, 4496.0, 4511.0, 4513.0, 4516.0, 4519.0, 4517.0",2022,Population,E02-05,23,no,no,5878,table_data,,table_data,actual
+"Shandong, 9708.0, 9746.0, 9808.0, 9866.0, 9973.0, 10033.0, 10077.0, 10106.0, 10165.0, 10170.0",2022,Population,E02-05,24,no,no,5879,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,25,yes,no,5880,empty,,empty,actual
+"Henan, 9532.0, 9573.0, 9645.0, 9701.0, 9778.0, 9829.0, 9864.0, 9901.0, 9941.0, 9883.0",2022,Population,E02-05,26,no,no,5881,table_data,,table_data,actual
+"Hubei, 5781.0, 5798.0, 5816.0, 5850.0, 5885.0, 5904.0, 5917.0, 5927.0, 5745.0, 5830.0",2022,Population,E02-05,27,no,no,5882,table_data,,table_data,actual
+"Hunan, 6590.0, 6600.0, 6611.0, 6615.0, 6625.0, 6633.0, 6635.0, 6640.0, 6645.0, 6622.0",2022,Population,E02-05,28,no,no,5883,table_data,,table_data,actual
+"Guangdong, 11041.0, 11270.0, 11489.0, 11678.0, 11908.0, 12141.0, 12348.0, 12489.0, 12624.0, 12684.0",2022,Population,E02-05,29,no,no,5884,table_data,,table_data,actual
+"Guangxi, 4694.0, 4731.0, 4770.0, 4811.0, 4857.0, 4907.0, 4947.0, 4982.0, 5019.0, 5037.0",2022,Population,E02-05,30,no,no,5885,table_data,,table_data,actual
+"Hainan, 910.0, 920.0, 936.0, 945.0, 957.0, 972.0, 982.0, 995.0, 1012.0, 1020.0",2022,Population,E02-05,31,no,no,5886,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,32,yes,no,5887,empty,,empty,actual
+"Chongqing, 2975.0, 3011.0, 3043.0, 3070.0, 3110.0, 3144.0, 3163.0, 3188.0, 3209.0, 3212.0",2022,Population,E02-05,33,no,no,5888,table_data,,table_data,actual
+"Sichuan, 8085.0, 8109.0, 8139.0, 8196.0, 8251.0, 8289.0, 8321.0, 8351.0, 8371.0, 8372.0",2022,Population,E02-05,34,no,no,5889,table_data,,table_data,actual
+"Guizhou, 3587.0, 3632.0, 3677.0, 3708.0, 3758.0, 3803.0, 3822.0, 3848.0, 3858.0, 3852.0",2022,Population,E02-05,35,no,no,5890,table_data,,table_data,actual
+"Yunnan, 4631.0, 4641.0, 4653.0, 4663.0, 4677.0, 4693.0, 4703.0, 4714.0, 4722.0, 4690.0",2022,Population,E02-05,36,no,no,5891,table_data,,table_data,actual
+"Tibet, 315.0, 317.0, 325.0, 330.0, 340.0, 349.0, 354.0, 361.0, 366.0, 366.0",2022,Population,E02-05,37,no,no,5892,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,38,yes,no,5893,empty,,empty,actual
+"Shaanxi, 3787.0, 3804.0, 3827.0, 3846.0, 3874.0, 3904.0, 3931.0, 3944.0, 3955.0, 3954.0",2022,Population,E02-05,39,no,no,5894,table_data,,table_data,actual
+"Gansu, 2550.0, 2537.0, 2531.0, 2523.0, 2520.0, 2522.0, 2515.0, 2509.0, 2501.0, 2490.0",2022,Population,E02-05,40,no,no,5895,table_data,,table_data,actual
+"Qinghai, 571.0, 571.0, 576.0, 577.0, 582.0, 586.0, 587.0, 590.0, 593.0, 594.0",2022,Population,E02-05,41,no,no,5896,table_data,,table_data,actual
+"Ningxia, 659.0, 666.0, 678.0, 684.0, 695.0, 705.0, 710.0, 717.0, 721.0, 725.0",2022,Population,E02-05,42,no,no,5897,table_data,,table_data,actual
+"Xinjiang, 2253.0, 2285.0, 2325.0, 2385.0, 2428.0, 2480.0, 2520.0, 2559.0, 2590.0, 2589.0",2022,Population,E02-05,43,no,no,5898,table_data,,table_data,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,44,yes,no,5899,empty,,empty,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,45,yes,no,5900,empty,,empty,actual

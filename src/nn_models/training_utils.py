@@ -19,11 +19,11 @@ model_path="model.pth", test_data_path="test_data.pth", indices_path="train_test
 Train the neural network model with L2 Regularization and Early Stopping.
 """
 
-import sys
 from pathlib import Path
 import logging
 import pickle
 from typing import Callable, Optional, Tuple, Union, Set, List
+import gc
 from numpy.typing import NDArray
 import pandas as pd
 import numpy as np
@@ -33,10 +33,18 @@ from sklearn.model_selection import GroupShuffleSplit
 
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.decomposition import PCA
+
+# User defined imports
 from utils.read_csv_file import read_csv_file
 from utils.read_exce_file import read_excel_file
-import logging_config
-from project_config import CLASSES, INFERENCE_EMBEDDINGS_CACHE_PKL_FILE
+from project_config import (
+    CLASSES,
+    INFERENCE_EMBEDDINGS_CACHE_PKL_FILE,
+    MODEL_PTH_FILE,
+    TRAINING_EMBEDDINGS_PKL_FILE,
+    TEST_DATA_PTH_FILE,
+    TRAIN_TEST_IDX_PTH_FILE,
+)
 
 # logger
 logger = logging.getLogger(__name__)
@@ -50,6 +58,28 @@ logger.info(f"Using device:, {device}")
 TOKENIZER = BertTokenizer.from_pretrained("bert-base-uncased")
 MODEL = BertModel.from_pretrained("bert-base-uncased").to(device)
 MODEL.eval()  # Set model to evaluation mode
+
+from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def all_training_files_exist() -> bool:
+    "Check if all files created by the training pipeline exist already."
+    files = {
+        "model": MODEL_PTH_FILE,
+        "embeddings": TRAINING_EMBEDDINGS_PKL_FILE,
+        "test_data": TEST_DATA_PTH_FILE,
+        "indices": TRAIN_TEST_IDX_PTH_FILE,
+    }
+    missing_files = [name for name, path in files.items() if not path.exists()]
+    if missing_files:
+        logger.info(f"Missing training files: {missing_files}")
+        return False
+    else:
+        logger.info("All training files exist.")
+        return True
 
 
 def load_data(file_path: Union[Path, str]) -> pd.DataFrame:
@@ -306,7 +336,7 @@ def process_batch_for_embeddings(
     return batch_embeddings, batch_labels, batch_indices, batch_groups
 
 
-def dynamic_batch_processing(
+def process_batches_for_embedding(
     df: pd.DataFrame,
     process_batch: Callable[
         [pd.DataFrame, bool],
@@ -405,70 +435,7 @@ def dynamic_batch_processing(
     return results  # Return the results
 
 
-def generate_embeddings(
-    df: pd.DataFrame,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Generate embeddings from a DataFrame by processing batches of data.
-
-    This function processes the input DataFrame using dynamic batching and extracts
-    embeddings, labels, original indices, and groups associated with each row of the data.
-
-    Args:
-        df (pd.DataFrame): Input DataFrame containing the data to process.
-            The DataFrame should include columns such as:
-            - 'text': Text data for embedding generation.
-            - 'row_id': Row identifiers.
-            - 'is_title': Flags indicating if a row is a title.
-            - 'is_empty': Flags indicating if a row is empty.
-            *- 'label': Class labels for supervised training.
-            - 'group': Group identifiers to preserve group-based batching.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-            A tuple containing:
-            - embeddings (np.ndarray): Feature embeddings generated from
-            the text data.
-            - labels (np.ndarray): Labels associated with the embeddings.
-            - original_indices (np.ndarray): Original row indices from
-            the input DataFrame.
-            - groups (np.ndarray): Group identifiers for each data point.
-
-    Raises:
-        ValueError: If required columns are missing in the input DataFrame.
-
-    Example:
-        >>> df = pd.read_excel("data.xlsx")
-        >>> embeddings, labels, original_indices, groups = generate_embeddings(df)
-        >>> print(embeddings.shape)  # (num_rows, embedding_dim)
-    """
-
-    # Log the start of the process
-    logger.info("Starting embedding generation...")
-
-    # Ensure required columns exist
-    required_columns = ["text", "row_id", "is_title", "is_empty", "label", "group"]
-    missing_columns = [col for col in required_columns if col not in df.columns]
-    if missing_columns:
-        logger.error(f"Missing required columns: {missing_columns}")
-        raise ValueError(f"Missing required columns: {missing_columns}")
-
-    # Process batches and generate embeddings
-    results = dynamic_batch_processing(df, process_batch_for_embeddings)
-
-    # Concatenate batch results into single arrays
-    embeddings = np.concatenate([r[0] for r in results], axis=0)
-    labels = np.concatenate([r[1] for r in results], axis=0)
-    original_indices = np.concatenate([r[2] for r in results], axis=0)
-    groups = np.concatenate([r[3] for r in results], axis=0)
-
-    # Log the completion of the process
-    logger.info("Embedding generation completed successfully.")
-
-    return embeddings, labels, original_indices, groups
-
-
-def dynamic_batch_processing_partial_cache(
+def process_batches_with_partial_cache_for_embedding(
     df: pd.DataFrame,
     process_batch: Callable[
         [pd.DataFrame, bool],
@@ -592,6 +559,74 @@ def dynamic_batch_processing_partial_cache(
     return results
 
 
+def generate_embeddings(
+    df: pd.DataFrame,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generate embeddings from a DataFrame by processing batches of data.
+
+    This function processes the input DataFrame using dynamic batching and extracts
+    embeddings, labels, original indices, and groups associated with each row of the data.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing the data to process.
+            The DataFrame should include columns such as:
+            - 'text': Text data for embedding generation.
+            - 'row_id': Row identifiers.
+            - 'is_title': Flags indicating if a row is a title.
+            - 'is_empty': Flags indicating if a row is empty.
+            *- 'label': Class labels for supervised training.
+            - 'group': Group identifiers to preserve group-based batching.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+            A tuple containing:
+            - embeddings (np.ndarray): Feature embeddings generated from
+            the text data.
+            - labels (np.ndarray): Labels associated with the embeddings.
+            - original_indices (np.ndarray): Original row indices from
+            the input DataFrame.
+            - groups (np.ndarray): Group identifiers for each data point.
+
+    Raises:
+        ValueError: If required columns are missing in the input DataFrame.
+
+    Example:
+        >>> df = pd.read_excel("data.xlsx")
+        >>> embeddings, labels, original_indices, groups = generate_embeddings(df)
+        >>> print(embeddings.shape)  # (num_rows, embedding_dim)
+    """
+
+    # Log the start of the process
+    logger.info("Starting embedding generation...")
+
+    # Ensure required columns exist
+    required_columns = ["text", "row_id", "is_title", "is_empty", "label", "group"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        logger.error(f"Missing required columns: {missing_columns}")
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    # Process batches and generate embeddings
+    results = process_batches_for_embedding(
+        df=df,
+        process_batch=process_batch_for_embeddings,
+        batch_size=64,
+        is_inference=False,
+    )
+
+    # Concatenate batch results into single arrays
+    embeddings = np.concatenate([r[0] for r in results], axis=0)
+    labels = np.concatenate([r[1] for r in results], axis=0)
+    original_indices = np.concatenate([r[2] for r in results], axis=0)
+    groups = np.concatenate([r[3] for r in results], axis=0)
+
+    # Log the completion of the process
+    logger.info("Embedding generation completed successfully.")
+
+    return embeddings, labels, original_indices, groups
+
+
 def _save_partial_cache(
     results: List[Tuple[np.ndarray, Optional[np.ndarray], np.ndarray, np.ndarray]],
     processed_groups: Set[str],
@@ -664,7 +699,7 @@ def load_or_generate_embeddings(
     return embeddings, labels, original_indices, groups
 
 
-def train_model(
+def train_model_core(
     model,
     criterion,
     optimizer,
@@ -683,19 +718,26 @@ def train_model(
     Train the neural network model with L2 Regularization and Early Stopping.
 
     Args:
-        model (nn.Module): The neural network model to be trained.
-        criterion (nn.Module): The loss function.
-        optimizer (torch.optim.Optimizer): The optimizer for training.
-        X_train (torch.Tensor): Training feature data.
-        y_train (torch.Tensor): Training labels.
-        X_test (torch.Tensor): Test feature data.
-        y_test (torch.Tensor): Test labels.
-        num_epochs (int, optional): The number of training epochs. Default is 20.
-        batch_size (int, optional): The batch size for training. Default is 32.
-        patience (int, optional): The patience for early stopping. Default is 3.
-        model_path (str, optional): The path to save the best model. Default is 'model.pth'.
-        test_data_path (str, optional): The path to save the test data. Default is 'test_data.pth'.
-        indices_path (str, optional): The path to save the train and test indices. Default is 'train_test_indices.pth'.
+        - model (nn.Module): The neural network model to be trained.
+        - criterion (nn.Module): The loss function.
+        - optimizer (torch.optim.Optimizer): The optimizer for training.
+        - X_train (torch.Tensor): Training feature data.
+        - y_train (torch.Tensor): Training labels.
+        - X_test (torch.Tensor): Test feature data.
+        - y_test (torch.Tensor): Test labels.
+        - num_epochs (int, optional): The number of training epochs.
+        Default is 20.
+        - batch_size (int, optional): The batch size for training.
+        Default is 32.
+        - patience (int, optional): The patience for early stopping.
+        Default is 3.
+        - model_path (str, optional): The path to save the best model.
+        Default is 'model.pth'.
+        - test_data_path (str, optional): The path to save the test data.
+        Default is 'test_data.pth'.
+        - indices_path (str, optional): The path to save the train
+        and test indices.
+        Default is 'train_test_indices.pth'.
     """
     best_val_loss = float("inf")
     no_improvement_count = 0
@@ -718,6 +760,14 @@ def train_model(
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
+
+            # * add empty_cache to clerar unused cached memory
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        # * clear cache at the end of the epoch as well
+        torch.cuda.empty_cache()
+        gc.collect()
 
         # Calculate average training loss
         avg_train_loss = epoch_loss / len(X_train)

@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from nn_models.simple_nn import SimpleNN
 from nn_models.training_utils import (
-    dynamic_batch_processing,
+    process_batches_for_embedding,
     process_batch_for_embeddings,
 )
 
@@ -199,7 +199,7 @@ def generate_embeddings(df, batch_size):
         - groups: The combined array of group identifiers.
     """
     logging.info("Generating embeddings...")
-    results = dynamic_batch_processing(
+    results = process_batches_for_embedding(
         df,
         process_batch_for_embeddings,
         batch_size=batch_size,

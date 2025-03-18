@@ -9,7 +9,6 @@ from transformers import AutoModel, AutoTokenizer
 from pipelines.preprocessing_pipeline_async import run_preprocessing_pipeline_async
 from pipelines.data_labeling_pipeline import run_data_labeling_pipeline
 from pipelines.model_train_pipeline import run_model_training_pipeline
-from sandbox.inference_pipeline import run_inference_pipeline
 from pipelines.inference_pipeline_async_batched import (
     run_inference_pipeline_async_batched,
 )

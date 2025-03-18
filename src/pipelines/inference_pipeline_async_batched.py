@@ -21,7 +21,7 @@ from torch import no_grad, Tensor
 # User defined
 from utils.validate_dataframe_columns import validate_dataframe_columns
 from nn_models.training_utils import (
-    dynamic_batch_processing_partial_cache,
+    process_batches_with_partial_cache_for_embedding,
     process_batch_for_embeddings,
 )
 from inference.inference_utils import (
@@ -35,6 +35,7 @@ from data_processing.post_process_inference_data import (
     process_inference_training_results,
 )
 from nn_models.simple_nn import SimpleNN
+from utils.log_timer import async_log_timer
 from project_config import (
     TRAINING_INFERENCE_DATA_FILE,
     TRAINING_DATA_FILE,
@@ -254,7 +255,7 @@ async def run_inference_pipeline_async_batched():
     try:
         logger.info("Starting inference pipeline...")
 
-        start_time_pipeline = time.time()
+        overall_start = time.time()
 
         # Step 0: Check for existing output to avoid redundant processing
         if COMBINED_CLEANED_OUTPUT_DATA_FILE.exists():
@@ -300,17 +301,19 @@ async def run_inference_pipeline_async_batched():
 
         # Step 4: Use partial caching batch function to get the inference results
         #    results -> List[Tuple[embeddings, None, original_indices, groups]]
-        partial_results = dynamic_batch_processing_partial_cache(
-            df_unlabeled,
-            process_batch_for_embeddings,  # from training utils
-            batch_size=64,  # desired chunk size
-            is_inference=True,  # no label used
-            partial_cache_path=INFERENCE_EMBEDDINGS_PKL_FILE,  # use the final
-        )
+        async with async_log_timer("Step 4: Process embeddings with partial caching"):
+            partial_results = process_batches_with_partial_cache_for_embedding(
+                df_unlabeled,
+                process_batch_for_embeddings,  # from training utils
+                batch_size=64,  # desired chunk size
+                is_inference=True,  # no label used
+                partial_cache_path=INFERENCE_EMBEDDINGS_PKL_FILE,  # use the final
+            )
 
         # Step 5: Classify partial results with the loaded model.
-        predictions_df = classify_inference_results(partial_results, model, device)
-        logger.info(f"Predictions sample:\n{predictions_df.head(5)}")
+        async with async_log_timer("Step 5: Classify partial results"):
+            predictions_df = classify_inference_results(partial_results, model, device)
+            logger.info(f"Predictions sample:\n{predictions_df.head(5)}")
 
         # Step 6: Merge predictions onto df_unlabeled
         final_df = df_unlabeled.merge(predictions_df, on="original_index", how="left")
@@ -357,11 +360,11 @@ async def run_inference_pipeline_async_batched():
         logger.info(f"Combined processed DataFrame size: {combined_df.shape}")
 
         # Logging time
-        elapsed_time_pipeline = time.time() - start_time_pipeline
-        formatted_time = time.strftime("%H:%M:%S", time.gmtime(elapsed_time_pipeline))
+        overall_elapsed = time.time() - overall_start
+        overall_time_str = time.strftime("%H:%M:%S", time.gmtime(overall_elapsed))
 
         logger.info("Finished inference pipeline.")
-        logger.info(f"Total inference pipeline runtime: {formatted_time}")
+        logger.info(f"Total inference pipeline runtime: {overall_time_str}")
 
     except Exception as e:
         logger.error(f"Error in inference pipeline: {e}")
@@ -370,106 +373,3 @@ async def run_inference_pipeline_async_batched():
 
 if __name__ == "__main__":
     asyncio.run(run_inference_pipeline_async_batched())
-
-# def run_inference(
-#     embeddings: np.ndarray,
-#     original_indices: np.ndarray,
-#     model: nn.Module,
-#     df_unlabed: pd.DataFrame,
-# ) -> pd.DataFrame:
-#     """
-#     Perform inference using precomputed embeddings and return a DataFrame that maps
-#     each original index to its predicted label.
-
-#     Args:
-#         - embeddings (np.ndarray): Precomputed embeddings.
-#         - original_indices (np.ndarray): Array of unique original indices corresponding
-#         to each embedding.
-#         - model (torch.nn.Module): Trained neural network model.
-
-#     Returns:
-#         pd.DataFrame: A DataFrame with columns 'original_index' and 'predicted_label'.
-#     """
-#     logger.info("Starting inference on precomputed embeddings...")
-#     start_time = time.time()
-
-#     # Perform inference using the precomputed embeddings.
-#     # Here, classify_data is assumed to return a list of predicted labels.
-#     predictions = classify_data(results=embeddings, model_nn=model)
-
-#     # Build a DataFrame with original indices and their corresponding predicted labels.
-#     results_df = pd.DataFrame(
-#         {"original_index": original_indices, "predicted_label": predictions}
-#     )
-
-#     elapsed_time = time.time() - start_time
-#     logger.info(f"Inference completed in {elapsed_time:.2f} seconds")
-
-#     return results_df
-
-# def process_embedding_batches_by_group_and_checkpoint(
-#     df: pd.DataFrame, target_batch_size: int, pickle_file: Union[str, Path]
-# ) -> None:
-#     """
-#     Process the inference DataFrame in batches based on groups, ensuring that
-#     each table (or group) is not split between batches. Accumulate groups until
-#     the total row count reaches the target_batch_size, then generate embeddings for
-#     that batch and update the checkpoint pickle file incrementally.
-
-#     Args:
-#         df (pd.DataFrame): The DataFrame containing inference data. Must include a "group" column.
-#         target_batch_size (int): Approximate number of rows per batch.
-#         pickle_file (Union[str, Path]): Path to the pickle file where embeddings are stored.
-
-#     Returns:
-#         None
-#     """
-#     if isinstance(pickle_file, str):
-#         pickle_file = Path(pickle_file)
-
-#     groups = list(df.groupby("group"))
-#     logger.info(f"Found {len(groups)} groups for processing.")
-
-#     batch_groups = []
-#     batch_row_count = 0
-
-#     for group_name, group_df in groups:
-#         group_size = group_df.shape[0]
-#         # If adding this group exceeds the target batch size and we have a current batch,
-#         # process the batch first.
-#         if batch_row_count + group_size > target_batch_size and batch_groups:
-#             # Concatenate all groups in the current batch
-#             batch_df = pd.concat(batch_groups)
-#             _, batch_embeddings, batch_labels, batch_indices, batch_groups_arr = (
-#                 generate_embeddings(batch_df, batch_size=batch_df.shape[0])
-#             )
-#             update_embeddings_on_disk(
-#                 pickle_file,
-#                 batch_embeddings,
-#                 batch_labels,
-#                 batch_indices,
-#                 batch_groups_arr,
-#             )
-#             logger.info(
-#                 f"Processed a batch with {batch_row_count} rows and updated embeddings on disk."
-#             )
-#             # Reset current batch
-#             batch_groups = []
-#             batch_row_count = 0
-
-#         # Add the current group to the batch
-#         batch_groups.append(group_df)
-#         batch_row_count += group_size
-
-#     # Process any remaining groups in the batch
-#     if batch_groups:
-#         batch_df = pd.concat(batch_groups)
-#         _, batch_embeddings, batch_labels, batch_indices, batch_groups_arr = (
-#             generate_embeddings(batch_df, batch_size=batch_df.shape[0])
-#         )
-#         update_embeddings_on_disk(
-#             pickle_file, batch_embeddings, batch_labels, batch_indices, batch_groups_arr
-#         )
-#         logger.info(
-#             f"Processed final batch with {batch_row_count} rows and updated embeddings on disk."
-#         )

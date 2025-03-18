@@ -1,0 +1,12 @@
+Classification Report:
+              precision    recall  f1-score   support
+
+  table_data       1.00      0.96      0.98      2501
+       title       0.95      1.00      0.97        69
+    metadata       0.65      0.99      0.79       159
+      header       0.94      0.97      0.95       207
+       empty       0.98      0.99      0.98       394
+
+    accuracy                           0.97      3330
+   macro avg       0.90      0.98      0.93      3330
+weighted avg       0.98      0.97      0.97      3330

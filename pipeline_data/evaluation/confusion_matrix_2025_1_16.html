@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}, "title": {"fontSize": 18}}, "data": {"name": "data-e4fccd4f0a8eb6fa56c7b70bea910e4e"}, "mark": {"type": "rect"}, "encoding": {"color": {"field": "Count", "scale": {"scheme": "blues"}, "type": "quantitative"}, "tooltip": [{"field": "Actual", "type": "nominal"}, {"field": "Predicted", "type": "nominal"}, {"field": "Count", "type": "quantitative"}], "x": {"field": "Predicted", "title": "Predicted Label", "type": "nominal"}, "y": {"field": "Actual", "title": "True Label", "type": "nominal"}}, "height": 400, "title": "Confusion Matrix", "width": 600, "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json", "datasets": {"data-e4fccd4f0a8eb6fa56c7b70bea910e4e": [{"Actual": "table_data", "Predicted": "table_data", "Count": 2347}, {"Actual": "title", "Predicted": "table_data", "Count": 0}, {"Actual": "metadata", "Predicted": "table_data", "Count": 1}, {"Actual": "header", "Predicted": "table_data", "Count": 0}, {"Actual": "empty", "Predicted": "table_data", "Count": 0}, {"Actual": "table_data", "Predicted": "title", "Count": 0}, {"Actual": "title", "Predicted": "title", "Count": 69}, {"Actual": "metadata", "Predicted": "title", "Count": 1}, {"Actual": "header", "Predicted": "title", "Count": 3}, {"Actual": "empty", "Predicted": "title", "Count": 0}, {"Actual": "table_data", "Predicted": "metadata", "Count": 136}, {"Actual": "title", "Predicted": "metadata", "Count": 0}, {"Actual": "metadata", "Predicted": "metadata", "Count": 156}, {"Actual": "header", "Predicted": "metadata", "Count": 4}, {"Actual": "empty", "Predicted": "metadata", "Count": 0}, {"Actual": "table_data", "Predicted": "header", "Count": 13}, {"Actual": "title", "Predicted": "header", "Count": 0}, {"Actual": "metadata", "Predicted": "header", "Count": 1}, {"Actual": "header", "Predicted": "header", "Count": 199}, {"Actual": "empty", "Predicted": "header", "Count": 5}, {"Actual": "table_data", "Predicted": "empty", "Count": 5}, {"Actual": "title", "Predicted": "empty", "Count": 0}, {"Actual": "metadata", "Predicted": "empty", "Count": 0}, {"Actual": "header", "Predicted": "empty", "Count": 1}, {"Actual": "empty", "Predicted": "empty", "Count": 389}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

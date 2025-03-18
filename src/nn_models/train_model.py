@@ -13,15 +13,15 @@ Key techniques include:
 
 It saves the following files:
 
-- simple_nn_model.pth: 
+- simple_nn_model.pth:
   This file contains the state dictionary of the trained neural network model.
-  The state dictionary is a Python dictionary object that maps each layer to 
+  The state dictionary is a Python dictionary object that maps each layer to
   its parameters (e.g., weights and biases).
-  This file will be used to load the trained model's parameters for inference 
+  This file will be used to load the trained model's parameters for inference
   or further training later on.
 
-- test_data.pth: 
-  This file contains a dictionary with the test dataset and input dimension size 
+- test_data.pth:
+  This file contains a dictionary with the test dataset and input dimension size
   used during training. It includes:
   * X_test: The feature embeddings of the test set.
   * y_test: The labels of the test set.
@@ -29,7 +29,7 @@ It saves the following files:
   * original_indices: The original indices of the test set from the initial dataset.
   * These indices are used to map the test data back to the original data for further analysis.
 
-- train_test_indices.pth: 
+- train_test_indices.pth:
   This file contains the training and test indices used during the data split.
   It includes:
   * train_idx: The indices of the training set.
@@ -38,30 +38,30 @@ It saves the following files:
   * These indices are used to map the test data back to the original data for further analysis.
 
 Training/Testing Process:
-1. Check if embeddings file already exist: 
+1. Check if embeddings file already exist:
    - if yes, then load embeddings and skip to step 3.
    - if no, then go to step 2.
 
-2. Load and preprocess the data: 
-   Read the data from an Excel file, tokenize, and generate embeddings 
-   using a pre-trained BERT model; 
+2. Load and preprocess the data:
+   Read the data from an Excel file, tokenize, and generate embeddings
+   using a pre-trained BERT model;
    save embeddings on disk (w/t picke)
 
-3. Combine text embeddings with additional features, extract labels, 
+3. Combine text embeddings with additional features, extract labels,
    and split the data into training and testing sets using GroupShuffleSplit.
 
 4. Manually calculate class weights.
 
-5. Define the neural network architecture with dropout and L2 regularization, 
+5. Define the neural network architecture with dropout and L2 regularization,
    and set up the loss function with class weights.
 
-6. Train the model: Perform forward and backward passes, compute the loss 
+6. Train the model: Perform forward and backward passes, compute the loss
    (including L2 regularization), and update the model parameters.
 
-7. Validate the model: Evaluate the performance on the test set, 
+7. Validate the model: Evaluate the performance on the test set,
    and save the best model based on validation loss.
 
-8. Implement early stopping to prevent overfitting and save the test data 
+8. Implement early stopping to prevent overfitting and save the test data
    and indices for further analysis.
 """
 
@@ -81,8 +81,8 @@ from tqdm import tqdm
 from nn_models.simple_nn import SimpleNN
 from nn_models.training_utils import (
     process_batch_for_embeddings,
-    dynamic_batch_processing,
-    train_model,
+    process_batches_for_embedding,
+    train_model_core,
     load_data,
     split_data,
 )
@@ -97,7 +97,7 @@ def generate_embeddings(df):
     """
     Generate embeddings with dynamic_batching/process_batch functions from training_utils.py file
     """
-    results = dynamic_batch_processing(df, process_batch_for_embeddings)
+    results = process_batches_for_embedding(df, process_batch_for_embeddings)
     embeddings = np.concatenate([r[0] for r in results], axis=0)
     labels = np.concatenate([r[1] for r in results], axis=0)
     original_indices = np.concatenate([r[2] for r in results], axis=0)
@@ -192,7 +192,7 @@ def main():
     unique_labels = np.unique(y_train.cpu().numpy())
     print("Unique labels in y_train:", unique_labels)
 
-    train_model(
+    train_model_core(
         model_nn,
         criterion,
         optimizer,
