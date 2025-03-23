@@ -1,29 +1,31 @@
-# Ignore the documents directory
+# Ignore user documents and data
 documents/
-
-# Ignore the analysis_tools directory
-/src/inspect_tools.ipynb
-/src/main_data_status.py
-/src/main_testing_emnbeddings_dim.py
-/src/multi_handler_logging_config.py
-/src/testing_1.py
-
-# Ignore the data folder for now
 data/
-
-# Ignore input_output directories
 pipeline_data/
 
-# Ignore environment files
+# Ignore specific dev/test scripts
+src/inspect_tools.ipynb
+src/main_data_status.py
+src/main_testing_emnbeddings_dim.py
+src/multi_handler_logging_config.py
+src/testing_1.py
+
+# Ignore environment files and folders
 .env
+*.env
 env/
+venv/
+.venv/
 
+# Ignore logs, temp files, and system junk
+*.log
+*.tmp
+.DS_Store
 
-
-# Ignore Python bytecode
+# Ignore Python build and bytecode
 __pycache__/
 *.pyc
 
-# Ignore logs and temp files
-*.log
-*.tmp
+# Optionally ignore all Jupyter notebooks
+# *.ipynb
+pipeline_data/nn_models/
