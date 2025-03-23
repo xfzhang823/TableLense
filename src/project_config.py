@@ -127,6 +127,10 @@ OUTPUT_DIR = PIPELINE_DATA_DIR / "output"
 COMBINED_CLEANED_OUTPUT_DATA_FILE = (
     OUTPUT_DIR / "combined_cleaned_training_and_inference_data.csv"
 )  # * final output
+RECONSTRUCTED_TABLES_DIR = (
+    OUTPUT_DIR / "reconstructed_tables"
+)  # * final output - reconconstructed table csv files
+
 
 # Model Input/Output
 # outputs of training; inputs of inference

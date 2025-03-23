@@ -12,6 +12,10 @@ from pipelines.model_train_pipeline import run_model_training_pipeline
 from pipelines.inference_pipeline_async_batched import (
     run_inference_pipeline_async_batched,
 )
+from pipelines.tables_reconstruction_pipeline_async import (
+    run_tables_reconstruction_pipeline_async,
+)
+
 import logging
 import logging_config
 
@@ -43,6 +47,9 @@ async def main():
 
     # Run inference pipeline()
     await run_inference_pipeline_async_batched()
+
+    # Run inference pipeline()
+    await run_tables_reconstruction_pipeline_async()
 
 
 if __name__ == "__main__":
