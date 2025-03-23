@@ -3,20 +3,22 @@ documents/
 
 # Ignore the analysis_tools directory
 /src/inspect_tools.ipynb
+/src/main_data_status.py
+/src/main_testing_emnbeddings_dim.py
+/src/multi_handler_logging_config.py
+/src/testing_1.py
 
 # Ignore the data folder for now
 data/
 
 # Ignore input_output directories
-input_output/
+pipeline_data/
 
 # Ignore environment files
 .env
 env/
 
-# Ignore large files
-input_output/models/embeddings.pkl
-inference_embeddings.pkl
+
 
 # Ignore Python bytecode
 __pycache__/
