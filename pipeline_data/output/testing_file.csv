@@ -1,112 +1,38 @@
 text,yearbook_source,section,group,row_id,is_empty,is_title,original_index,actual_label,predicted_label,label,label_type
-"4-17 Registered Unemployed Persons and Unemployment Rate in Urban Area by Region, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,1,no,yes,4018,title,title,title,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,2,yes,no,4019,empty,empty,empty,actual
-"Region, EMPTY, Unemployed Persons 10 000 persons, EMPTY, EMPTY, EMPTY, Unemployment Rate %, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,3,no,no,4020,unlabeled,header,header,predicted
-"EMPTY, EMPTY, 1990.0, 2005.0, 2010.0, 2011.0, 1990.0, 2005.0, 2010.0, 2011.0",2012,Employments and Wages,E0417e,4,no,no,4021,unlabeled,header,header,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,5,yes,no,4022,empty,empty,empty,actual
-"EMPTY, National Total, 383.2, 839.0, 908.0, 922.0, 2.5, 4.2, 4.1, 4.1",2012,Employments and Wages,E0417e,6,no,no,4023,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,7,yes,no,4024,empty,empty,empty,actual
-"EMPTY, Beijing , 1.7, 10.56, 7.7255, 8.1336, 0.4, 2.11, 1.37, 1.39",2012,Employments and Wages,E0417e,8,no,no,4025,unlabeled,table_data,table_data,predicted
-"EMPTY, Tianjin , 8.1, 11.71, 16.0983, 20.1098, 2.7, 3.7, 3.6, 3.6",2012,Employments and Wages,E0417e,9,no,no,4026,unlabeled,table_data,table_data,predicted
-"EMPTY, Hebei , 7.7, 27.82, 35.1365, 35.9857, 1.1, 3.93, 3.86, 3.75",2012,Employments and Wages,E0417e,10,no,no,4027,unlabeled,table_data,table_data,predicted
-"EMPTY, Shanxi , 5.5, 14.27, 20.3868, 21.1493, 1.2, 3.01, 3.58, 3.48",2012,Employments and Wages,E0417e,11,no,no,4028,unlabeled,table_data,table_data,predicted
-"EMPTY, Inner Mongolia, 15.2, 17.74, 20.811, 21.8289, 3.8, 4.26, 3.9, 3.8",2012,Employments and Wages,E0417e,12,no,no,4029,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,13,yes,no,4030,empty,empty,empty,actual
-"EMPTY, Liaoning , 23.7, 60.4, 38.9317, 39.4319, 2.2, 5.62, 3.63, 3.68",2012,Employments and Wages,E0417e,14,no,no,4031,unlabeled,table_data,table_data,predicted
-"EMPTY, Jilin , 10.5, 27.64, 22.65, 22.2121, 1.9, 4.2, 3.8, 3.7",2012,Employments and Wages,E0417e,15,no,no,4032,unlabeled,table_data,table_data,predicted
-"EMPTY, Heilongjiang , 20.4, 31.3, 36.2397, 35.0299, 2.2, 4.42, 4.27, 4.1",2012,Employments and Wages,E0417e,16,no,no,4033,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,17,yes,no,4034,empty,empty,empty,actual
-"EMPTY, Shanghai , 7.7, 27.5, 27.7301, 27.0045, 1.5, EMPTY, 4.35, 3.54",2012,Employments and Wages,E0417e,18,no,no,4035,unlabeled,table_data,table_data,predicted
-"EMPTY, Jiangsu , 22.5, 41.62, 40.6482, 41.4484, 2.4, 3.56, 3.16, 3.22",2012,Employments and Wages,E0417e,19,no,no,4036,unlabeled,table_data,table_data,predicted
-"EMPTY, Zhejiang , 11.2, 28.97, 31.1342, 31.673, 2.2, 3.72, 3.2, 3.12",2012,Employments and Wages,E0417e,20,no,no,4037,unlabeled,table_data,table_data,predicted
-"EMPTY, Anhui , 15.2, 27.77, 26.8631, 33.1367, 2.8, 4.4, 3.66, 3.74",2012,Employments and Wages,E0417e,21,no,no,4038,unlabeled,table_data,table_data,predicted
-"EMPTY, Fujian , 9.0, 14.86, 14.4929, 14.6361, 2.6, 3.95, 3.77, 3.69",2012,Employments and Wages,E0417e,22,no,no,4039,unlabeled,table_data,table_data,predicted
-"EMPTY, Jiangxi , 10.3, 22.83, 26.2577, 24.6416, 2.4, 3.48, 3.31, 2.98",2012,Employments and Wages,E0417e,23,no,no,4040,unlabeled,table_data,table_data,predicted
-"EMPTY, Shandong , 26.2, 42.9, 59.5139, 45.0, 3.2, 3.33, 3.36, 3.35",2012,Employments and Wages,E0417e,24,no,no,4041,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,25,yes,no,4042,empty,empty,empty,actual
-"EMPTY, Henan , 25.1, 33.02, 38.1571, 38.4073, 3.3, 3.45, 3.38, 3.35",2012,Employments and Wages,E0417e,26,no,no,4043,unlabeled,table_data,table_data,predicted
-"EMPTY, Hubei , 12.7, 52.64, 55.6542, 55.1156, 1.7, 4.33, 4.18, 4.1",2012,Employments and Wages,E0417e,27,no,no,4044,unlabeled,table_data,table_data,predicted
-"EMPTY, Hunan , 15.9, 41.86, 43.2172, 43.1448, 2.7, 4.27, 4.16, 4.21",2012,Employments and Wages,E0417e,28,no,no,4045,unlabeled,table_data,table_data,predicted
-"EMPTY, Guangdong , 19.2, 34.49, 39.3029, 38.8345, 2.2, 2.58, 2.52, 2.46",2012,Employments and Wages,E0417e,29,no,no,4046,unlabeled,table_data,table_data,predicted
-"EMPTY, Guangxi , 13.9, 18.5, 19.0707, 18.8133, 3.9, 4.15, 3.66, 3.46",2012,Employments and Wages,E0417e,30,no,no,4047,unlabeled,table_data,table_data,predicted
-"EMPTY, Hainan , 3.5, 5.08, 4.7738, 2.8547, 3.0, 3.55, 3.0, 1.73",2012,Employments and Wages,E0417e,31,no,no,4048,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,32,yes,no,4049,empty,empty,empty,actual
-"EMPTY, Chongqing , EMPTY, 16.88, 13.0166, 12.9565, EMPTY, 4.12, 3.9, 3.5",2012,Employments and Wages,E0417e,33,no,no,4050,unlabeled,table_data,table_data,predicted
-"EMPTY, Sichuan , 38.0, 34.3, 34.555, 36.931, 3.7, 4.61, 4.14, 4.16",2012,Employments and Wages,E0417e,34,no,no,4051,unlabeled,table_data,table_data,predicted
-"EMPTY, Guizhou , 10.7, 12.13, 12.1798, 12.5091, 4.1, 4.2, 3.64, 3.63",2012,Employments and Wages,E0417e,35,no,no,4052,unlabeled,table_data,table_data,predicted
-"EMPTY, Yunnan , 7.8, 12.97, 15.6899, 15.994, 2.5, 4.17, 4.21, 4.05",2012,Employments and Wages,E0417e,36,no,no,4053,unlabeled,table_data,table_data,predicted
-"EMPTY, Tibet , EMPTY, EMPTY, 2.0789, 1.0403, EMPTY, EMPTY, 3.99, 3.2",2012,Employments and Wages,E0417e,37,no,no,4054,unlabeled,table_data,table_data,predicted
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Employments and Wages,E0417e,38,yes,no,4055,empty,empty,empty,actual
-"EMPTY, Shaanxi , 11.2, 21.54, 21.4206, 20.9061, 2.8, 4.18, 3.85, 3.59",2012,Employments and Wages,E0417e,39,no,no,4056,unlabeled,table_data,table_data,predicted
-"EMPTY, Gansu , 12.5, 9.25, 10.7224, 10.7769, 4.9, 3.26, 3.21, 3.11",2012,Employments and Wages,E0417e,40,no,no,4057,unlabeled,table_data,table_data,predicted
-"EMPTY, Qinghai , 4.2, 3.63, 4.2424, 4.3538, 5.6, 3.93, 3.8, 3.76",2012,Employments and Wages,E0417e,41,no,no,4058,unlabeled,table_data,table_data,predicted
-"EMPTY, Ningxia , 4.0, 4.35, 4.7551, 5.2223, 5.4, 4.52, 4.35, 4.35",2012,Employments and Wages,E0417e,42,no,no,4059,unlabeled,table_data,table_data,predicted
-"EMPTY, Xinjiang , 9.6, 11.13, 10.9874, 11.1183, 3.0, 3.92, 3.23, 3.22",2012,Employments and Wages,E0417e,43,no,no,4060,unlabeled,table_data,table_data,predicted
-"19-7 Gold and Foreign Exchange Reserves, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,1,no,yes,2863,title,,title,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,2,yes,no,2864,empty,,empty,actual
-"Year, Gold Reserves, Foreign Exchange, Year, Gold Reserves, Foreign Exchange",2012,Financial Intermediation,T1907e,3,no,no,2865,header,,header,actual
-"EMPTY, 10 000 oz., Reserves, EMPTY, 10 000 oz., Reserves",2012,Financial Intermediation,T1907e,4,no,no,2866,header,,header,actual
-"EMPTY, EMPTY, USD 100 million, EMPTY, EMPTY, USD 100 million",2012,Financial Intermediation,T1907e,5,no,no,2867,header,,header,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,Financial Intermediation,T1907e,6,yes,no,2868,empty,,empty,actual
-"1978.0, 1280.0, 1.67, 1995.0, 1267.0, 735.97",2012,Financial Intermediation,T1907e,7,no,no,2869,table_data,,table_data,actual
-"1979.0, 1280.0, 8.4, 1996.0, 1267.0, 1050.29",2012,Financial Intermediation,T1907e,8,no,no,2870,table_data,,table_data,actual
-"1980.0, 1280.0, -12.96, 1997.0, 1267.0, 1398.9",2012,Financial Intermediation,T1907e,9,no,no,2871,table_data,,table_data,actual
-"1981.0, 1267.0, 27.08, 1998.0, 1267.0, 1449.59",2012,Financial Intermediation,T1907e,10,no,no,2872,table_data,,table_data,actual
-"1982.0, 1267.0, 69.86, 1999.0, 1267.0, 1546.75",2012,Financial Intermediation,T1907e,11,no,no,2873,table_data,,table_data,actual
-"1983.0, 1267.0, 89.01, 2000.0, 1267.0, 1655.74",2012,Financial Intermediation,T1907e,12,no,no,2874,table_data,,table_data,actual
-"1984.0, 1267.0, 82.2, 2001.0, 1608.0, 2121.65",2012,Financial Intermediation,T1907e,13,no,no,2875,table_data,,table_data,actual
-"1985.0, 1267.0, 26.44, 2002.0, 1929.0, 2864.07",2012,Financial Intermediation,T1907e,14,no,no,2876,table_data,,table_data,actual
-"1986.0, 1267.0, 20.72, 2003.0, 1929.0, 4032.51",2012,Financial Intermediation,T1907e,15,no,no,2877,table_data,,table_data,actual
-"1987.0, 1267.0, 29.23, 2004.0, 1929.0, 6099.32",2012,Financial Intermediation,T1907e,16,no,no,2878,table_data,,table_data,actual
-"1988.0, 1267.0, 33.72, 2005.0, 1929.0, 8188.72",2012,Financial Intermediation,T1907e,17,no,no,2879,table_data,,table_data,actual
-"1989.0, 1267.0, 55.5, 2006.0, 1929.0, 10663.4",2012,Financial Intermediation,T1907e,18,no,no,2880,table_data,,table_data,actual
-"1990.0, 1267.0, 110.93, 2007.0, 1929.0, 15282.49",2012,Financial Intermediation,T1907e,19,no,no,2881,table_data,,table_data,actual
-"1991.0, 1267.0, 217.12, 2008.0, 1929.0, 19460.3",2012,Financial Intermediation,T1907e,20,no,no,2882,table_data,,table_data,actual
-"1992.0, 1267.0, 194.43, 2009, 3389.0, 23991.52",2012,Financial Intermediation,T1907e,21,no,no,2883,table_data,,table_data,actual
-"1993.0, 1267.0, 211.99, 2010, 3389.0, 28473.38",2012,Financial Intermediation,T1907e,22,no,no,2884,table_data,,table_data,actual
-"1994.0, 1267.0, 516.2, 2011, 3389.0, 31811.48",2012,Financial Intermediation,T1907e,23,no,no,2885,table_data,,table_data,actual
-"2-5 Population at Year-end by Region, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,1,no,yes,5856,title,,title,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,2,yes,no,5857,empty,,empty,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, 10 000 persons",2022,Population,E02-05,3,no,no,5858,metadata,,metadata,actual
-"Region, 2012.0, 2013.0, 2014.0, 2015.0, 2016.0, 2017.0, 2018.0, 2019.0, 2020.0, 2021.0",2022,Population,E02-05,4,no,no,5859,header,,header,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,5,yes,no,5860,empty,,empty,actual
-"National Total, 135922.0, 136726.0, 137646.0, 138326.0, 139232.0, 140011.0, 140541.0, 141008.0, 141212.0, 141260.0",2022,Population,E02-05,6,no,no,5861,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,7,yes,no,5862,empty,,empty,actual
-"Beijing, 2078.0, 2125.0, 2171.0, 2188.0, 2195.0, 2194.0, 2192.0, 2190.0, 2189.0, 2189.0",2022,Population,E02-05,8,no,no,5863,table_data,,table_data,actual
-"Tianjin, 1378.0, 1410.0, 1429.0, 1439.0, 1443.0, 1410.0, 1383.0, 1385.0, 1387.0, 1373.0",2022,Population,E02-05,9,no,no,5864,table_data,,table_data,actual
-"Hebei, 7262.0, 7288.0, 7323.0, 7345.0, 7375.0, 7409.0, 7426.0, 7447.0, 7464.0, 7448.0",2022,Population,E02-05,10,no,no,5865,table_data,,table_data,actual
-"Shanxi, 3548.0, 3535.0, 3528.0, 3519.0, 3514.0, 3510.0, 3502.0, 3497.0, 3490.0, 3480.0",2022,Population,E02-05,11,no,no,5866,table_data,,table_data,actual
-"Inner Mongolia, 2464.0, 2455.0, 2449.0, 2440.0, 2436.0, 2433.0, 2422.0, 2415.0, 2403.0, 2400.0",2022,Population,E02-05,12,no,no,5867,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,13,yes,no,5868,empty,,empty,actual
-"Liaoning, 4375.0, 4365.0, 4358.0, 4338.0, 4327.0, 4312.0, 4291.0, 4277.0, 4255.0, 4229.0",2022,Population,E02-05,14,no,no,5869,table_data,,table_data,actual
-"Jilin, 2698.0, 2668.0, 2642.0, 2613.0, 2567.0, 2526.0, 2484.0, 2448.0, 2399.0, 2375.0",2022,Population,E02-05,15,no,no,5870,table_data,,table_data,actual
-"Heilongjiang, 3724.0, 3666.0, 3608.0, 3529.0, 3463.0, 3399.0, 3327.0, 3255.0, 3171.0, 3125.0",2022,Population,E02-05,16,no,no,5871,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,17,yes,no,5872,empty,,empty,actual
-"Shanghai, 2399.0, 2448.0, 2467.0, 2458.0, 2467.0, 2466.0, 2475.0, 2481.0, 2488.0, 2489.0",2022,Population,E02-05,18,no,no,5873,table_data,,table_data,actual
-"Jiangsu, 8120.0, 8192.0, 8281.0, 8315.0, 8381.0, 8423.0, 8446.0, 8469.0, 8477.0, 8505.0",2022,Population,E02-05,19,no,no,5874,table_data,,table_data,actual
-"Zhejiang, 5685.0, 5784.0, 5890.0, 5985.0, 6072.0, 6170.0, 6273.0, 6375.0, 6468.0, 6540.0",2022,Population,E02-05,20,no,no,5875,table_data,,table_data,actual
-"Anhui, 5978.0, 5988.0, 5997.0, 6011.0, 6033.0, 6057.0, 6076.0, 6092.0, 6105.0, 6113.0",2022,Population,E02-05,21,no,no,5876,table_data,,table_data,actual
-"Fujian, 3841.0, 3885.0, 3945.0, 3984.0, 4016.0, 4065.0, 4104.0, 4137.0, 4161.0, 4187.0",2022,Population,E02-05,22,no,no,5877,table_data,,table_data,actual
-"Jiangxi, 4475.0, 4476.0, 4480.0, 4485.0, 4496.0, 4511.0, 4513.0, 4516.0, 4519.0, 4517.0",2022,Population,E02-05,23,no,no,5878,table_data,,table_data,actual
-"Shandong, 9708.0, 9746.0, 9808.0, 9866.0, 9973.0, 10033.0, 10077.0, 10106.0, 10165.0, 10170.0",2022,Population,E02-05,24,no,no,5879,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,25,yes,no,5880,empty,,empty,actual
-"Henan, 9532.0, 9573.0, 9645.0, 9701.0, 9778.0, 9829.0, 9864.0, 9901.0, 9941.0, 9883.0",2022,Population,E02-05,26,no,no,5881,table_data,,table_data,actual
-"Hubei, 5781.0, 5798.0, 5816.0, 5850.0, 5885.0, 5904.0, 5917.0, 5927.0, 5745.0, 5830.0",2022,Population,E02-05,27,no,no,5882,table_data,,table_data,actual
-"Hunan, 6590.0, 6600.0, 6611.0, 6615.0, 6625.0, 6633.0, 6635.0, 6640.0, 6645.0, 6622.0",2022,Population,E02-05,28,no,no,5883,table_data,,table_data,actual
-"Guangdong, 11041.0, 11270.0, 11489.0, 11678.0, 11908.0, 12141.0, 12348.0, 12489.0, 12624.0, 12684.0",2022,Population,E02-05,29,no,no,5884,table_data,,table_data,actual
-"Guangxi, 4694.0, 4731.0, 4770.0, 4811.0, 4857.0, 4907.0, 4947.0, 4982.0, 5019.0, 5037.0",2022,Population,E02-05,30,no,no,5885,table_data,,table_data,actual
-"Hainan, 910.0, 920.0, 936.0, 945.0, 957.0, 972.0, 982.0, 995.0, 1012.0, 1020.0",2022,Population,E02-05,31,no,no,5886,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,32,yes,no,5887,empty,,empty,actual
-"Chongqing, 2975.0, 3011.0, 3043.0, 3070.0, 3110.0, 3144.0, 3163.0, 3188.0, 3209.0, 3212.0",2022,Population,E02-05,33,no,no,5888,table_data,,table_data,actual
-"Sichuan, 8085.0, 8109.0, 8139.0, 8196.0, 8251.0, 8289.0, 8321.0, 8351.0, 8371.0, 8372.0",2022,Population,E02-05,34,no,no,5889,table_data,,table_data,actual
-"Guizhou, 3587.0, 3632.0, 3677.0, 3708.0, 3758.0, 3803.0, 3822.0, 3848.0, 3858.0, 3852.0",2022,Population,E02-05,35,no,no,5890,table_data,,table_data,actual
-"Yunnan, 4631.0, 4641.0, 4653.0, 4663.0, 4677.0, 4693.0, 4703.0, 4714.0, 4722.0, 4690.0",2022,Population,E02-05,36,no,no,5891,table_data,,table_data,actual
-"Tibet, 315.0, 317.0, 325.0, 330.0, 340.0, 349.0, 354.0, 361.0, 366.0, 366.0",2022,Population,E02-05,37,no,no,5892,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,38,yes,no,5893,empty,,empty,actual
-"Shaanxi, 3787.0, 3804.0, 3827.0, 3846.0, 3874.0, 3904.0, 3931.0, 3944.0, 3955.0, 3954.0",2022,Population,E02-05,39,no,no,5894,table_data,,table_data,actual
-"Gansu, 2550.0, 2537.0, 2531.0, 2523.0, 2520.0, 2522.0, 2515.0, 2509.0, 2501.0, 2490.0",2022,Population,E02-05,40,no,no,5895,table_data,,table_data,actual
-"Qinghai, 571.0, 571.0, 576.0, 577.0, 582.0, 586.0, 587.0, 590.0, 593.0, 594.0",2022,Population,E02-05,41,no,no,5896,table_data,,table_data,actual
-"Ningxia, 659.0, 666.0, 678.0, 684.0, 695.0, 705.0, 710.0, 717.0, 721.0, 725.0",2022,Population,E02-05,42,no,no,5897,table_data,,table_data,actual
-"Xinjiang, 2253.0, 2285.0, 2325.0, 2385.0, 2428.0, 2480.0, 2520.0, 2559.0, 2590.0, 2589.0",2022,Population,E02-05,43,no,no,5898,table_data,,table_data,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,44,yes,no,5899,empty,,empty,actual
-"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2022,Population,E02-05,45,yes,no,5900,empty,,empty,actual
+"1-7 Per Capita Output of Major Industrial and Agricultural Products, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,1,no,yes,532,title,title,title,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,2,yes,no,533,empty,empty,empty,actual
+"EMPTY, Grain, Cotton, Oil-bearing, Sugar Crops, Tea, Fruits, Pork, Beef, Aquatic, Coal, Crude Oil, Yarn, Cloth, Machine-made, Cement, Crude, Electricity",2012,General Survey,B0107e,3,no,no,534,unlabeled,header,header,predicted
+"Year, EMPTY, EMPTY, Crops, EMPTY, EMPTY, EMPTY, and Mutton, Products, EMPTY, EMPTY, EMPTY, EMPTY, Paper and, EMPTY, Steel, EMPTY",2012,General Survey,B0107e,4,no,no,535,unlabeled,header,header,predicted
+"EMPTY, kg, kg, kg, kg, kg, kg, kg, kg, ton, kg, kg, m, Paperboard kg, kg, kg, kwh",2012,General Survey,B0107e,5,no,no,536,unlabeled,header,header,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,6,yes,no,537,empty,empty,empty,actual
+"1978, 318.7368288945945, 2.266345243760229, 5.4571125276495165, 24.910658725220017, 0.2802863522509191, 6.870885255159936, 9.05, 4.866837836565865, 0.65, 108.82013041682137, 2.4912018323197356, 11.53566591540163, 4.591257785005726, 68.23090157033566, 33.23694132288883, 268.36372383427545",2012,General Survey,B0107e,7,no,no,538,unlabeled,table_data,table_data,predicted
+"1980, 326.6852486916997, 2.7584625497459836, 7.83762299551076, 29.669447176262562, 0.3095079160445765, 6.922449769932788, 12.28, 4.582984708046492, 0.63, 107.97617288417148, 2.9819564120725413, 13.727598383669559, 5.452312646817531, 81.38723139716785, 37.8298776541807, 306.34863208099995",2012,General Survey,B0107e,8,no,no,539,unlabeled,table_data,table_data,predicted
+"1985, 360.6979753387122, 3.945289713046126, 15.017686767392298, 57.53135951057999, 0.41134209925407217, 11.074227431876999, 16.75, 6.709069112498097, 0.83, 118.83467803318618, 3.36333536306896, 13.957603897092405, 8.667605419394123, 138.86246003957984, 44.51781093012635, 390.75582280407974",2012,General Survey,B0107e,9,no,no,540,unlabeled,table_data,table_data,predicted
+"1990, 393.1015649431591, 3.970928086611434, 14.210521633037786, 63.55321643608751, 0.47575505314111793, 16.512041649598963, 22.14, 10.897081092509149, 0.95, 121.83917158877188, 4.075106700669935, 16.631650347740678, 12.086135739989517, 184.736408603003, 58.448622911684, 547.2235802974845",2012,General Survey,B0107e,10,no,no,541,unlabeled,table_data,table_data,predicted
+"1991, 378.2590938320096, 4.93145866282, 14.236527398807763, 73.1567736665566, 0.4706207963294461, 18.910005387650113, 23.67, 11.737912546272963, 0.94, 122.51690157979806, 4.004240602026451, 15.78929074193156, 12.852152453118755, 219.51198317662804, 61.697283581570765, 588.7311215001998",2012,General Survey,B0107e,11,no,no,542,unlabeled,table_data,table_data,predicted
+"1992, 379.9737332291819, 3.8699640334085856, 14.087493240169275, 75.60688258066732, 0.480550572117737, 20.94554366206855, 25.24, 13.366181961767253, 0.96, 121.97738997570754, 4.306548666489266, 16.36952024515653, 14.80724825531988, 264.57333665244596, 69.4781839875705, 647.1411280977193",2012,General Survey,B0107e,12,no,no,543,unlabeled,table_data,table_data,predicted
+"1993, 387.3663487322223, 3.1731144563999862, 15.307891789144971, 64.69739910390007, 0.5090976205831438, 25.5525559213876, 27.37, 15.46957587997692, 0.98, 123.24768337802519, 4.255626081938835, 17.226163402464273, 16.241811208037745, 312.1754183496827, 75.99877804555175, 712.3824717423034",2012,General Survey,B0107e,13,no,no,544,unlabeled,table_data,table_data,predicted
+"1994, 373.458574383199, 3.6422659176815584, 16.693519656663884, 61.62965427261324, 0.493749554258769, 29.364930548272202, 30.98, 17.982606652766535, 1.04, 122.56730168186033, 4.107112142200892, 17.728964160307424, 17.93872473958224, 353.38784311586755, 77.70370898656273, 778.7151744998259",2012,General Survey,B0107e,14,no,no,545,unlabeled,table_data,table_data,predicted
+"1995, 387.2814571047969, 3.956925107170572, 18.677234190006264, 65.90118893974793, 0.4884845064343842, 34.980364442194286, 27.42, 20.8919745529545, 1.13, 124.53739246631338, 4.500126571247162, 21.594299729013034, 23.341397927551448, 394.7411929236298, 79.1463703101203, 835.8101182299945",2012,General Survey,B0107e,15,no,no,546,unlabeled,table_data,table_data,predicted
+"1996, 414.3854461829083, 3.452239333086937, 18.156197281425815, 68.66446306106526, 0.48736068333949323, 38.21463102131329, 30.34536569340068, 27.00579031661944, 1.1471392550613937, 129.22171574062665, 4.206890887437887, 17.173832696809168, 21.668103979302696, 403.42408935977994, 83.15108209108456, 888.1031579811918",2012,General Survey,B0107e,16,no,no,547,unlabeled,table_data,table_data,predicted
+"1997, 401.7405442757555, 3.741823872528098, 17.538592362254334, 76.30815112899619, 0.49864113976790037, 41.37408125520801, 34.549925817531445, 25.352865421567945, 1.1280054468223484, 130.67609698595615, 4.551185903298579, 20.225596000243886, 22.21978334654391, 416.02178728939293, 88.56508749466497, 923.157531044855",2012,General Survey,B0107e,17,no,no,548,unlabeled,table_data,table_data,predicted
+"1998, 412.4976749990941, 3.624206580859707, 18.63109341471172, 78.83192840205002, 0.5354821307073236, 43.906108612769586, 37.024481957590375, 27.237021120681383, 1.0725429269647766, 129.63641414405745, 4.364157544476965, 19.40520236566326, 17.115469006026885, 431.5845837342534, 93.07250379448199, 939.6627037646898",2012,General Survey,B0107e,18,no,no,549,unlabeled,table_data,table_data,predicted
+"1999, 405.8207042989938, 3.056391814709416, 20.763789628293292, 66.52740843035438, 0.5395163382519048, 49.79220026581839, 38.01522269274827, 28.49882283259747, 1.088815511660487, 127.72054744219646, 4.5260968999828375, 19.9563355378432, 17.23668613074593, 457.3992105273661, 99.19097015729584, 989.2754652819631",2012,General Survey,B0107e,19,no,no,550,unlabeled,table_data,table_data,predicted
+"2000, 366.0373264060761, 3.4984837385013203, 23.401901563780793, 60.470920171544655, 0.5411845768208801, 49.30243282949681, 37.56586263487642, 29.352902333056505, 1.096257855533424, 129.0940842437898, 5.203362782096313, 21.938074438975324, 19.696272507315992, 472.8169833959664, 101.77048972593248, 1073.6192674900703",2012,General Survey,B0107e,20,no,no,551,unlabeled,table_data,table_data,predicted
+"2001, 355.888430239415, 4.185642961041005, 22.52542752683099, 68.05148438101978, 0.5517152179895428, 52.34894051971538, 37.99277501634724, 29.845693384401063, 1.1569968942878484, 128.91355112631206, 5.980893973345912, 22.801430986358454, 29.69744859849825, 519.7467468648033, 119.22349333647836, 1164.289814050399",2012,General Survey,B0107e,21,no,no,552,unlabeled,table_data,table_data,predicted
+"2002, 356.9646204311153, 3.8395962199312716, 22.627342236801, 80.38642506248048, 0.582141518275539, 54.29537878787879, 38.49133705657002, 30.887679147819707, 1.2108718369259606, 130.42799125273353, 6.638550452983442, 25.17885035926273, 36.44946891596376, 566.2293033427054, 142.42900656044986, 1291.7838175570134",2012,General Survey,B0107e,22,no,no,553,unlabeled,table_data,table_data,predicted
+"2003, 334.2869152437131, 3.7718945979509466, 21.817761564731452, 74.83425877056814, 0.5961968332815895, 112.67782986650109, 39.50466659544764, 31.644072977447887, 1.42416850357032, 131.635982614095, 7.634119838559454, 27.438683638621548, 37.63838869916175, 669.1098261409501, 172.5675256131636, 1482.9051536789816",2012,General Survey,B0107e,23,no,no,554,unlabeled,table_data,table_data,predicted
+"2004, 362.2240179001987, 4.878968871400191, 23.65534016164188, 73.84334702852844, 0.6444310707327894, 118.36415330902918, 40.3858737473333, 32.76483681139974, 1.6377221997183804, 135.69685396292655, 9.96346662037305, 37.19692147445171, 41.76664159095732, 745.9598402870205, 218.28281542349015, 1699.9857261346758",2012,General Survey,B0107e,24,no,no,555,unlabeled,table_data,table_data,predicted
+"2005, 371.2621612748076, 4.382979937026356, 23.60272940508698, 72.49953824440831, 0.717069071579787, 123.64690961249349, 41.98360553266847, 33.901942243226806, 1.8021644985119505, 139.10417881140123, 11.126162059337894, 37.154450342097995, 47.59779707299113, 819.844675237014, 270.94759610959414, 1917.7890958181204",2012,General Survey,B0107e,25,no,no,556,unlabeled,table_data,table_data,predicted
+"2006, 379.8891475487741, 5.745744536615352, 20.13939318504574, 79.78497480302488, 0.7841711034156611, 130.44779959115803, 42.64589251117451, 34.96208872185982, 1.9286900276120882, 140.9327851596467, 13.294686579914876, 45.655291299903894, 52.34870558801544, 943.3607420176656, 319.71175115558873, 2185.875120135467",2012,General Survey,B0107e,26,no,no,557,unlabeled,table_data,table_data,predicted
+"2007, 380.6119442179852, 5.784721203876287, 19.491390902565186, 92.48285780445109, 0.8843714512267763, 137.6166159186879, 40.09340680951734, 36.02378204471558, 2.042395732556331, 141.37667550658819, 15.693099170261442, 51.23815810939498, 59.12830026899161, 1032.846189159145, 371.2675992214799, 2490.014682616465",2012,General Survey,B0107e,27,no,no,558,unlabeled,table_data,table_data,predicted
+"2008, 399.12970347617863, 5.655722508879671, 22.291237824188187, 101.30653011538853, 0.9493790609630431, 145.09580812362464, 42.38084633357365, 36.95753686809018, 2.1152677489610503, 143.75863904186372, 16.388569099123924, 54.58402376467835, 63.445198938591545, 1074.6626857559138, 379.76491992254586, 2638.9973238314883",2012,General Survey,B0107e,28,no,no,559,unlabeled,table_data,table_data,predicted
+"2009.0, 398.7356162217856, 4.790030355479556, 23.69401361116536, 92.21764545618436, 1.0205683337589952, 153.2045236617941, 44.436977469980825, 38.43279224193621, 2.2332226612382255, 142.3385364241395, 17.978907200697083, 56.594504454426634, 67.34319366615085, 1234.9036251370883, 429.80507188678394, 2790.327208809699",2012,General Survey,B0107e,29,no,no,560,unlabeled,table_data,table_data,predicted
+"2010.0, 408.51841027281796, 4.4562383305736315, 24.146809311470015, 89.76933536168288, 1.102686317237358, 159.98604133198276, 45.77353405539488, 40.16582430356469, 2.418320930249943, 151.31437798318765, 20.310905618204313, 59.8039179041717, 73.50372466276197, 1406.8211601212527, 476.36055782104427, 3145.0581406214374",2012,General Survey,B0107e,30,no,no,561,unlabeled,table_data,table_data,predicted
+"2011.0, 424.96521217172165, 4.90202502659713, 24.60146800532687, 93.11956508894228, 1.2076315311763, 169.38973608653927, 45.33583123942849, 41.68651097736082, 2.618794313050077, 150.93443342533834, 21.353366117860624, 60.57003414848266, 81.91834123187489, 1561.797296392462, 509.83394463333155, 3506.3714075275457",2012,General Survey,B0107e,31,no,no,562,unlabeled,table_data,table_data,predicted
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,32,yes,no,563,empty,empty,empty,actual
+"EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,33,yes,no,564,empty,empty,empty,actual
+"a Population data calculated in the table refer to the annual average population. The same applies to the tables following. Since 2003, the output of , EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,34,no,no,565,unlabeled,metadata,metadata,predicted
+"fruits includes that of fruit melons., EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,35,no,no,566,unlabeled,metadata,metadata,predicted
+"b Data of pork, beef and mutton from 2000 to 2006, aquatic products from 1997 to 2006 were adjusted according to the Second National Agricultural , EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,36,no,no,567,unlabeled,metadata,metadata,predicted
+"Census in 2006., EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY",2012,General Survey,B0107e,37,no,no,568,unlabeled,metadata,metadata,predicted

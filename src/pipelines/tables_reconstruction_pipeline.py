@@ -75,7 +75,11 @@ def reconstruct_table_from_group(group_df, delimiter=","):
       6. Returns a DataFrame with the reconstructed table.
     """
     group_df = group_df.sort_values(by="row_id").reset_index(drop=True)
-    group_df["cells"] = group_df["text"].apply(lambda x: deserialize_text(x, delimiter))
+    group_df["cells"] = group_df["text"].apply(
+        lambda x: [
+            cell if cell != "EMPTY" else "" for cell in deserialize_text(x, delimiter)
+        ]
+    )
     header_lists = group_df[group_df["label"] == "header"]["cells"].tolist()
     data_lists = group_df[group_df["label"] == "table_data"]["cells"].tolist()
 
@@ -175,8 +179,10 @@ def run_tables_reconstruction_pipeline(
 
     Calls reconstruct_tables with the given parameters.
     """
+    logger.info("Start running tables reconstruction pipeline...")
+
     return reconstruct_tables(inference_csv, output_dir, save_as_excel=save_as_excel)
 
 
 if __name__ == "__main__":
-    run_reconstruct_tables_pipeline()
+    run_tables_reconstruction_pipeline()
