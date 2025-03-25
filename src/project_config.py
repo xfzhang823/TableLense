@@ -104,7 +104,7 @@ PREPROCESSED_ALL_DATA_FILE = (
 # Training and Inference
 TRAINING_INFERENCE_DIR = PIPELINE_DATA_DIR / "training_inference"
 TRAINING_INFERENCE_DATA_FILE = (
-    TRAINING_INFERENCE_DIR / "training_and_inference_data_v2.csv"
+    TRAINING_INFERENCE_DIR / "training_and_inference_data_v1.csv"
 )
 
 # Training

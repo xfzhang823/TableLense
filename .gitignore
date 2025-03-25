@@ -2,6 +2,7 @@
 documents/
 data/
 pipeline_data/
+sandbox
 
 # Ignore specific dev/test scripts
 src/inspect_tools.ipynb

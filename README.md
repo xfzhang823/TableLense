@@ -1,5 +1,3 @@
-
-
 # Table Lense: Project README
 
 ## Project Overview
@@ -13,10 +11,11 @@ The **Table Lense** project automates the preprocessing, training, and inference
 4. [Data Preprocessing Pipeline](#data-preprocessing-pipeline)
 5. [Model Training Pipeline](#model-training-pipeline)
 6. [Inference Pipeline](#inference-pipeline)
-7. [Key Configuration Paths](#key-configuration-paths)
-8. [Usage Instructions](#usage-instructions)
-9. [Dependencies](#dependencies)
-10. [Authors](#authors)
+7. [Git Management Notes](#git-management-notes)
+8. [Key Configuration Paths](#key-configuration-paths)
+9. [Usage Instructions](#usage-instructions)
+10. [Dependencies](#dependencies)
+11. [Authors](#authors)
 
 ---
 
@@ -45,6 +44,7 @@ The **Table Lense** project automates the preprocessing, training, and inference
 |-- data_processing/           # Preprocessing utilities and core functions
 |-- pipelines/                 # High-level pipeline orchestration scripts
 |-- utils/                     # Helper functions (e.g., encoding detection)
+|-- sandbox/                  # (Locally used, ignored in version control)
 ```
 
 ---
@@ -66,6 +66,7 @@ The **Table Lense** project automates the preprocessing, training, and inference
 
 ### 4. **Inference Pipeline**
    - `inference_pipeline.py`: Runs the full inference process, classifies new data, and saves combined cleaned results.
+   - `inference_pipeline_async_batched.py`: Asynchronous, batched version of the inference pipeline optimized for large-scale GPU processing.
 
 ---
 
@@ -149,6 +150,7 @@ Configuration paths are stored in `project_config.py`:
 - `pandas`, `numpy`, `torch`, `transformers`, `xlwings`: Core libraries for data handling and model operations.
 - `asyncio`, `concurrent.futures`: For asynchronous file processing.
 - `tqdm`: Progress bar for data processing loops.
+- `git-filter-repo` (external): For removing large files from Git history.
 
 ---
 

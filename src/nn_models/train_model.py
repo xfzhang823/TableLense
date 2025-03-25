@@ -28,6 +28,9 @@ It saves the following files:
   * input_dim: The dimension of the input features used to initialize the model.
   * original_indices: The original indices of the test set from the initial dataset.
   * These indices are used to map the test data back to the original data for further analysis.
+  (The file's primary role is to provide critical metadata—especially the input dimension -
+  for setting up the model prior to inference, while the final model weights are stored
+  separately in simple_nn_model.pth.)
 
 - train_test_indices.pth:
   This file contains the training and test indices used during the data split.

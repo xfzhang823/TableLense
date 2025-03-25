@@ -60,7 +60,8 @@ def extract_and_save_inference_data(
     The function performs the following steps with error handling:
     1. Converts the input file paths to Path objects.
     2. Validates that the production and training data files exist.
-    3. Loads the production (training & inference) data and training data using a custom CSV reader.
+    3. Loads the production (training & inference) data and training data using
+    a custom CSV reader.
     4. Filters out rows from the production data that exist in the training data.
     5. Ensures the filtered DataFrame contains the 'is_empty' and 'is_title' columns,
         adding them if necessary.
@@ -109,6 +110,17 @@ def extract_and_save_inference_data(
     try:
         train_infer_df = read_csv_file(training_inference_data_file)
         training_df = read_csv_file(training_data_file)
+
+        logger.debug(
+            f"Training data from {training_data_file}: {training_df.shape}"
+        )  # todo: debug
+        logger.debug(
+            f"Training & inference data from {inference_data_file}: {train_infer_df.shape}"
+        )  # todo: debug
+        logger.info(
+            f"Expected inference data: {len(train_infer_df)-len(training_df)}"
+        )  # todo: debug
+
     except Exception as e:
         logger.error("Error reading input CSV files.", exc_info=e)
         raise
@@ -131,6 +143,9 @@ def extract_and_save_inference_data(
     # Save the filtered data with error handling
     try:
         filtered_df.to_csv(inference_data_file, index=False)
+
+        logger.info(f"Inference data saved to {inference_data_file}")  # Debug
+
     except Exception as e:
         logger.error("Error saving filtered data to CSV.", exc_info=e)
         raise

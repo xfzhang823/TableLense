@@ -34,9 +34,7 @@ async def save_csv_async(df: pd.DataFrame, path: Path | str):
     await loop.run_in_executor(None, lambda: df.to_csv(path, index=False))
 
 
-def process_group(
-    group_tuple: tuple, delimiter: str, yearbook_source: str
-) -> Dict[str, Any]:
+def process_group(group_tuple: tuple, delimiter: str) -> Dict[str, Any]:
     """
     Process a single group tuple by reconstructing its title, metadata, and table.
 
@@ -58,14 +56,21 @@ def process_group(
 
     logger.info(f"Processing group: {group}")
 
+    # Extract yearbook source from the dataframe
+    yearbook_source_value = (
+        group_df["yearbook_source"].iloc[0]
+        if "yearbook_source" in group_df.columns
+        else ""
+    )
     objects = reconstruct_objects_from_group(group_df, delimiter)
     objects["group"] = group
-    objects["yearbook_source"] = yearbook_source
+    objects["yearbook_source"] = yearbook_source_value
     return objects
 
 
 async def process_all_groups_async(
-    input_csv: str, delimiter: str, yearbook_source: str
+    input_csv: str,
+    delimiter: str,
 ) -> List[Dict[str, Any]]:
     """
     Processes all groups from the input CSV concurrently.
@@ -84,9 +89,7 @@ async def process_all_groups_async(
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as executor:
         tasks = [
-            loop.run_in_executor(
-                executor, process_group, group_tuple, delimiter, yearbook_source
-            )
+            loop.run_in_executor(executor, process_group, group_tuple, delimiter)
             for group_tuple in groups
         ]
         results = await asyncio.gather(*tasks)
@@ -98,7 +101,6 @@ async def tables_reconstruction_pipeline_async(
     output_dir: str,
     delimiter: str = ",",
     save_as_excel: bool = False,
-    yearbook_source: str = "",
 ) -> List[Dict[str, Any]]:
     """
     Reverse preprocesses the entire dataset by reconstructing each table group into
@@ -128,7 +130,8 @@ async def tables_reconstruction_pipeline_async(
 
     # Process all groups concurrently.
     groups_objects = await process_all_groups_async(
-        input_csv, delimiter, yearbook_source
+        input_csv,
+        delimiter,
     )
 
     loop = asyncio.get_running_loop()
@@ -235,56 +238,3 @@ async def run_tables_reconstruction_pipeline_async(
 
 if __name__ == "__main__":
     asyncio.run(run_tables_reconstruction_pipeline_async())
-
-
-# def reconstruct_tables(inference_csv, output_dir, delimiter=",", save_as_excel=False):
-#     """
-#     Reconstructs tables from an inference CSV file.
-
-#     This function:
-#       - Loads the inference output CSV.
-#       - Groups rows by the combination of "group" and "yearbook_source".
-#       - For each group, calls reconstruct_table_from_group to get a structured table.
-#       - Saves each reconstructed table as a CSV file.
-#       - Optionally, saves all tables into a single Excel workbook.
-
-#     Parameters:
-#         inference_csv (str or Path): Path to the inference output CSV file.
-#         output_dir (str or Path): Directory where reconstructed tables will be saved.
-#         delimiter (str): Delimiter used in the flattened text (default is comma).
-#         save_as_excel (bool): If True, saves all tables in a single Excel workbook.
-
-#     Returns:
-#         dict: Mapping of table names to their reconstructed DataFrames.
-#     """
-#     df = pd.read_csv(inference_csv)
-#     output_dir = Path(output_dir)
-#     output_dir.mkdir(parents=True, exist_ok=True)
-
-#     grouped = df.groupby(["group", "yearbook_source"])
-#     tables = {}
-
-#     for (group, yearbook_source), group_df in grouped:
-#         try:
-#             table_df = reconstruct_table_from_group(group_df, delimiter)
-#             table_name = f"{group}_{yearbook_source}"
-#             tables[table_name] = table_df
-#             csv_path = output_dir / f"{table_name}.csv"
-#             table_df.to_csv(csv_path, index=False)
-#             logger.info(f"Saved table {table_name} to {csv_path}")
-#         except Exception as e:
-#             logger.error(
-#                 f"Error reconstructing table for group {group} ({yearbook_source}): {e}"
-#             )
-
-#     if save_as_excel:
-#         excel_path = output_dir / "reconstructed_tables.xlsx"
-#         with pd.ExcelWriter(excel_path) as writer:
-#             for name, table in tables.items():
-#                 sheet_name = name[:31]
-#                 table.to_excel(writer, sheet_name=sheet_name, index=False)
-#         logger.info(f"All tables saved in single Excel workbook: {excel_path}")
-#     else:
-#         logger.info(f"Tables saved as individual CSV files in: {output_dir}")
-
-#     return tables
